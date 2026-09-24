@@ -2,36 +2,91 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Swift package infrastructure for Federal Register documents.
+Portable Swift models and an SDK for Federal Register documents.
 
 ## Status
 
-Infrastructure only. No government API, library products, source targets, fixtures, or tests are implemented. The package is not ready for application use and has no release or remote repository configured.
+Implemented locally: document detail, presidential-document searches, lazy cursor page/item sequences,
+raw response receipts, and lossless UTF-8 content from advertised HTML, text, and XML links. Models preserve
+every JSON field, explicit null, unknown code, and conflicting date assertion. There is no published release.
 
-Future coverage is document queries, details, presidential-document filters, and official representation links. Federal Register publication is not a complete history of presidential actions. Coverage, freshness, ordering, and representation availability must be documented against verified provider contracts when implemented.
+Current and 1994 fixtures are verified. Historical PDF/XML links can be null, and an advertised HTML link
+returned 404; no replacement format is inferred. Text responses can contain HTML wrappers. PDF/MODS links
+are retained but not downloaded. Content decoding does not render HTML or parse XML into an element model.
+
+FederalRegister.gov is an informational rendition from OFR/NARA and GPO; GPO publishes the official edition.
+This package promises neither complete presidential history nor stable snapshots, freshness, or format
+availability. Absence from the Federal Register does not prove absence of a presidential action.
+See [verification and remaining gates](IMPLEMENTATION_READINESS.md).
 
 ## Usage
 
-Run `bash Scripts/verify.sh --scaffold` to validate infrastructure. The default verification command deliberately fails until service source exists. See [implementation readiness](IMPLEMENTATION_READINESS.md) for deferred gates.
+```swift
+import SwiftFederalRegisterDocuments
+import SwiftFederalRegisterDocumentsModels
+
+let client = FederalRegisterClient(userAgent: "(MyApp, contact@example.com)")
+let document = try await client.document("93-32104")
+let request = try DocumentRequest.document("93-32104")
+let same = try await client.value(for: request)
+let direct = try await client.send(.document("93-32104"))
+
+let query = try DocumentQuery(pageSize: 20, publishedFrom: "1994-01-01", publishedThrough: "1994-12-31")
+for try await document in client.documents(matching: query) {
+  print(document.documentNumber, document.title)
+}
+for try await receipt in client.documentResponses(matching: query) {
+  print(receipt.requestURL, receipt.body.count)
+}
+```
+
+Use `documentPages(matching:)` for page envelopes and `presidentialDocuments(matching:)` for one page.
+Request-based sequence overloads accept `.presidentialDocuments(matching:)`; custom endpoint requests yield
+one page only. Every iterator is independent, performs no construction I/O or prefetch, checks cancellation,
+and terminates after a failure. Provider order and duplicates remain intact. Capped `total_pages` never
+stops cursor traversal; unsafe, changed, missing, or repeated continuations throw typed errors.
+
+The API needs no key. The SDK sends once, refuses redirects, and preserves HTTP failure bodies and headers,
+including Retry-After. No numerical quota was verified. Callers own retry and backoff. Receipt timestamps
+are optional and supplied through `retrievalTime`; the default does not invent an instant. The default
+8 MiB decoding/receipt limit applies after transport buffering, not as a streaming memory limit.
 
 ## Example
 
-No API example is available because no API is implemented.
+The [offline consumer demo](Examples/OfflineDemo/README.md) runs against attributed recorded responses and
+shows historical date evidence, null formats, source text, and two cursor pages. Run
+`bash Scripts/linux-demo.sh` to build and execute it in the pinned Linux container.
+
+The iOS example is `Examples/SwiftFederalRegisterDocumentsDemo/SwiftFederalRegisterDocumentsDemo.xcodeproj`.
+It supports document lookup, source-content loading, and explicit next-page loading. Its Apple build and
+runtime verification remain pending. Close the standalone package workspace before opening the demo.
 
 ## Products
 
-| Product | Status |
+| Product | Contents |
 | --- | --- |
-| None | Products are added only with working service source. |
+| `SwiftFederalRegisterDocuments` | Client, typed failures, lazy page/item/receipt sequences. |
+| `SwiftFederalRegisterDocumentsModels` | Source values, content decoding, queries, requests, endpoints, receipts; no third-party dependencies. |
 
 ## Requirements
 
-The manifest declares Swift tools 6.2, Swift 6 language mode, and iOS, macOS, tvOS, visionOS, and watchOS 26. Infrastructure verification needs Bash, Python 3, Git, and Swift with swift-format. No Apple, Linux, or Android library compatibility has been established yet.
+Swift tools 6.2, Swift 6 language mode, and iOS/macOS/tvOS/visionOS/watchOS 26 floors. Linux validation uses
+Swift 6.3 in `swift:6.3-noble`, with both default traits and `HTTPPortable`. The Apple package build and Apple-symbol DocC generation pass; Apple tests, iOS demo execution, and
+Android execution remain unverified. Enable `HTTPPortable` and inject a portable transport for Linux or Android networking.
+The default Apple convenience uses URLSession; default-trait Linux consumers supply their own transport.
 
 ## Installation
 
-No installable library or published version exists yet. Dependency pins and the portable transport trait will be added with the first implemented slice after the shared networking prerequisite is complete.
+Use a local path dependency until a public repository and release are published:
+
+```swift
+.package(path: "../swift-federal-register")
+```
+
+Choose either product independently. SDK dependencies use the verified public swifty-networking `1.3.1`
+minimum and swift-http-types. `Package.resolved` records the HTTPPortable-enabled dependency superset.
 
 ## License
 
-MIT. See [LICENSE](LICENSE). The package license does not grant rights to upstream content.
+MIT. See [LICENSE](LICENSE). The package license does not grant rights to upstream content. Recorded
+responses carry separate [source attribution and receipts](Sources/SwiftFederalRegisterDocumentsTestSupport/Fixtures/README.md).

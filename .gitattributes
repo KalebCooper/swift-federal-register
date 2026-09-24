@@ -1,0 +1,4 @@
+# Preserve original government response bytes, including source whitespace and line endings.
+Sources/SwiftFederalRegisterDocumentsTestSupport/Fixtures/current-* -text -whitespace
+Sources/SwiftFederalRegisterDocumentsTestSupport/Fixtures/historical-* -text -whitespace
+Sources/SwiftFederalRegisterDocumentsTestSupport/Fixtures/presidential-* -text -whitespace
