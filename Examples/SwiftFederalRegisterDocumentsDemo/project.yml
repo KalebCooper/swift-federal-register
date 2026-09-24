@@ -1,0 +1,41 @@
+name: SwiftFederalRegisterDocumentsDemo
+options:
+  bundleIdPrefix: dev.cooperlabs
+  deploymentTarget:
+    iOS: '26.0'
+  xcodeVersion: '16.0'
+packages:
+  swift-federal-register:
+    path: ../..
+schemes:
+  SwiftFederalRegisterDocumentsDemo:
+    build:
+      targets:
+        SwiftFederalRegisterDocumentsDemo: all
+    run:
+      config: Debug
+  SwiftFederalRegisterDocumentsDemoRelease:
+    build:
+      targets:
+        SwiftFederalRegisterDocumentsDemo: all
+    run:
+      config: Release
+targets:
+  SwiftFederalRegisterDocumentsDemo:
+    dependencies:
+      - package: swift-federal-register
+        product: SwiftFederalRegisterDocuments
+      - package: swift-federal-register
+        product: SwiftFederalRegisterDocumentsModels
+    platform: iOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        PRODUCT_BUNDLE_IDENTIFIER: dev.cooperlabs.SwiftFederalRegisterDocumentsDemo
+        SWIFT_STRICT_CONCURRENCY: complete
+        SWIFT_VERSION: '6.0'
+    sources:
+      - path: SwiftFederalRegisterDocumentsDemo
+    type: application

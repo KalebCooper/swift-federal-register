@@ -13,7 +13,7 @@ on:
 
 jobs:
   linux:
-    # Disabled until real products, tests, dependency pins, and demo are implemented.
+    # Activation awaits Apple, Android, and iOS demo qualification.
     if: ${{ false }}
     name: swift test (Linux)
     runs-on: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
         run: swift test --scratch-path .build-default
 
   android:
-    # Disabled until real products, tests, dependency pins, and demo are implemented.
+    # Activation awaits Apple, Android, and iOS demo qualification.
     if: ${{ false }}
     name: swift test (Android)
     # `ubuntu-24.04` rather than `ubuntu-latest`: the action below derives the swift.org host toolchain
@@ -95,7 +95,7 @@ jobs:
           swift-version: '6.3.3'
 
   apple:
-    # Disabled until real products, tests, dependency pins, and demo are implemented.
+    # Activation awaits Apple, Android, and iOS demo qualification.
     if: ${{ false }}
     name: Build & Test (iOS ${{ matrix.os }} Simulator)
     # Two runners, one job. `xcode-27` is GitHub's public preview image for Xcode 27 (arm64 only, macOS
@@ -156,7 +156,7 @@ jobs:
             | xcbeautify --renderer github-actions
 
   lint:
-    # Disabled until real products, tests, dependency pins, and demo are implemented.
+    # Activation awaits Apple, Android, and iOS demo qualification.
     if: ${{ false }}
     name: swift-format lint
     runs-on: ubuntu-latest
@@ -171,17 +171,17 @@ jobs:
       - name: Lint
         run: swift format lint --strict --recursive Sources Tests Examples/SwiftFederalRegisterDocumentsDemo/SwiftFederalRegisterDocumentsDemo
 
-  scaffold:
-    name: Validate package infrastructure
+  verification:
+    # Source exists; activation awaits Apple, Android, and demo qualification.
+    if: ${{ false }}
+    name: Verify source conventions
     runs-on: ubuntu-latest
     container: swift:6.3-noble
     # Provisional until this package has green runs on main.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - name: Install validation runtime
-        run: apt-get update && apt-get install -y python3
-      - name: Validate scaffold
-        run: bash Scripts/verify.sh --scaffold
+      - name: Verify source
+        run: bash Scripts/verify.sh
       - name: Validate gate self-tests
         run: bash Scripts/verify.sh --self-test

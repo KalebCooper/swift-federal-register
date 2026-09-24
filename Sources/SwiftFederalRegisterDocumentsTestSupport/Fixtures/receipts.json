@@ -1,0 +1,102 @@
+[
+  {
+    "byteCount": 2898,
+    "file": "current-document.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-24T00:38:46.166785+00:00",
+    "sha256": "934ba853fa4d00f3d3216a06be71aa12dbb3b7ad16ac59348bf4c2fe1d47ac8b",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents/2026-19417.json"
+  },
+  {
+    "byteCount": 2285,
+    "file": "historical-document.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-24T00:38:46.366224+00:00",
+    "sha256": "03e1145b88c6a9500b6b69cd994312d91bc9e5f89c3428b6f9df3d0e22b4b6ed",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents/93-32104.json"
+  },
+  {
+    "byteCount": 2058,
+    "file": "presidential-page-one.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-24T00:38:46.599339+00:00",
+    "sha256": "6304a75b52b41e79810134c58740ed43a1f4a0b81623f61c883455e2230f6e01",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents.json?conditions%5Btype%5D%5B%5D=PRESDOCU&order=newest&per_page=2"
+  },
+  {
+    "byteCount": 2140,
+    "file": "presidential-page-two.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-24T00:38:46.813191+00:00",
+    "sha256": "074e6c4ee2203465161ea785f26fb9b28f7764747ebebb61d43b8315e11d888d",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents?conditions%5Btype%5D%5B%5D=PRESDOCU&format=json&order=newest&page=2&per_page=2&search_after_cursor=WzE3OTAxMjE2MDAwMDAsIjIwMjYtMTk1NTQiXQ"
+  },
+  {
+    "byteCount": 954,
+    "file": "historical-page.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-24T00:38:47.040409+00:00",
+    "sha256": "b6a7b9819f234a643e17c80d56c3e2cb28d4891e8075d02b2babce3a70701ca7",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents.json?conditions%5Btype%5D%5B%5D=PRESDOCU&conditions%5Bpublication_date%5D%5Bis%5D=1994-01-03&order=newest&per_page=2"
+  },
+  {
+    "byteCount": 22396,
+    "file": "current-content.html",
+    "mediaType": "text/html",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-24T00:38:47.299008+00:00",
+    "sha256": "19d7414eb9185234aac641d5477a120f5b1bbd298866c740acef103e33a51f5f",
+    "status": 200,
+    "url": "https://www.federalregister.gov/documents/full_text/html/2026/09/22/2026-19417.html"
+  },
+  {
+    "byteCount": 17849,
+    "file": "current-content.xml",
+    "mediaType": "text/xml",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-24T00:38:47.610989+00:00",
+    "sha256": "5b9ed147c0dfcf1093a48f3af87e6884ab147f9f936eb7aabe5c518ca0a86064",
+    "status": 200,
+    "url": "https://www.federalregister.gov/documents/full_text/xml/2026/09/22/2026-19417.xml"
+  },
+  {
+    "byteCount": 20294,
+    "file": "current-content.txt",
+    "mediaType": "text/plain",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-24T00:38:47.882562+00:00",
+    "sha256": "f6ac6035672032bceea6d3d7946fa7bd41f96122a4c5d89001c0a3e76aca4afd",
+    "status": 200,
+    "url": "https://www.federalregister.gov/documents/full_text/text/2026/09/22/2026-19417.txt"
+  },
+  {
+    "byteCount": 4569,
+    "file": "historical-content.html",
+    "mediaType": "text/html",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-24T00:38:48.125482+00:00",
+    "sha256": "7d80334cd926333e2ad7bec254d8b787c397ef2b9dd0f6f944168b300e340edf",
+    "status": 404,
+    "url": "https://www.federalregister.gov/documents/full_text/html/1994/01/03/93-32104.html"
+  },
+  {
+    "byteCount": 2622,
+    "file": "historical-content.txt",
+    "mediaType": "text/plain",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-24T00:38:48.366155+00:00",
+    "sha256": "51b4e6849d31aae19e4d493638c0825d9b6eb93752f2520fdfa4ec208f2af706",
+    "status": 200,
+    "url": "https://www.federalregister.gov/documents/full_text/text/1994/01/03/93-32104.txt"
+  }
+]

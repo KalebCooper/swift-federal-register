@@ -1,0 +1,56 @@
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
+
+/// A reusable, inspectable document operation; construction performs no I/O.
+///
+/// ```swift
+/// let request = try DocumentRequest.document("93-32104")
+/// ```
+public struct DocumentRequest<Response>: Hashable, Sendable {
+  /// A transport-free resolution containing only endpoint values and continuation policy.
+  public enum Resolution: Hashable, Sendable {
+    /// One endpoint, with no automatic continuation.
+    case endpoint(Endpoint<Response>)
+    /// A library-created presidential search whose sequence follows validated cursor links.
+    case presidentialDocuments(Endpoint<Response>)
+  }
+
+  /// The underlying independently executable endpoint.
+  public var endpoint: Endpoint<Response> {
+    switch resolution {
+    case .endpoint(let endpoint), .presidentialDocuments(let endpoint): return endpoint
+    }
+  }
+
+  /// The complete value description available to custom executors.
+  public let resolution: Resolution
+
+  /// Creates a single-operation request, including a consumer-defined response.
+  /// - Parameter endpoint: The endpoint to execute once.
+  public init(endpoint: Endpoint<Response>) { resolution = .endpoint(endpoint) }
+
+  private init(resolution: Resolution) { self.resolution = resolution }
+
+}
+
+extension DocumentRequest where Response == FederalRegisterDocument {
+  /// Describes one document detail lookup.
+  /// - Parameter number: The original provider document number.
+  /// - Returns: A reusable detail request.
+  /// - Throws: `DocumentValidationError.invalidDocumentNumber` for invalid input.
+  public static func document(_ number: String) throws(DocumentValidationError) -> Self {
+    Self(endpoint: try .document(number))
+  }
+}
+
+extension DocumentRequest where Response == DocumentPage {
+  /// Describes a presidential search with cursor continuation for lazy sequence execution.
+  /// - Parameter query: Immutable validated filters.
+  /// - Returns: A request whose single-value execution still retrieves only its first page.
+  public static func presidentialDocuments(matching query: DocumentQuery) -> Self {
+    Self(resolution: .presidentialDocuments(.presidentialDocuments(matching: query)))
+  }
+}

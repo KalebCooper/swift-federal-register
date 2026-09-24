@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   build:
-    # No documentation products or catalogs exist yet.
+    # Catalogs pass Linux and Apple DocC; platform qualification remains incomplete.
     if: ${{ false }}
     name: Build DocC site
     runs-on: macos-26
