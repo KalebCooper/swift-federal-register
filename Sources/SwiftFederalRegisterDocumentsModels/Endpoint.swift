@@ -69,6 +69,28 @@ public struct Endpoint<Response>: Hashable, Sendable {
     return endpoint
   }
 
+  /// Encodes query items for the provider's form parser, which reads `+` as a space.
+  ///
+  /// Every UTF-8 byte outside the RFC 3986 unreserved characters becomes an uppercase `%XX`
+  /// escape, so `+`, `&`, `=`, `;`, `?`, `#`, `%`, spaces, and non-ASCII text arrive exactly as given.
+  static func formEncodedQuery(_ items: [URLQueryItem]) -> String {
+    items.map { formEncoded($0.name) + "=" + formEncoded($0.value ?? "") }.joined(separator: "&")
+  }
+
+  private static func formEncoded(_ text: String) -> String {
+    var encoded = ""
+    for byte in text.utf8 {
+      switch byte {
+      case 45, 46, 48...57, 65...90, 95, 97...122, 126:
+        encoded.unicodeScalars.append(Unicode.Scalar(byte))
+      default:
+        let hex = String(byte, radix: 16, uppercase: true)
+        encoded += (hex.count == 1 ? "%0" : "%") + hex
+      }
+    }
+    return encoded
+  }
+
   /// Whether a provider identifier can form one path segment: nonempty ASCII letters, digits, and hyphens.
   static func isPathSegment(_ value: String) -> Bool {
     !value.isEmpty
@@ -124,5 +146,21 @@ extension Endpoint where Response == DocumentPage {
     var components = URLComponents()
     components.queryItems = query.queryItems
     return builtIn(path: "/api/v1/documents.json?" + (components.percentEncodedQuery ?? ""))
+  }
+
+  /// Describes the first page of a general document search.
+  ///
+  /// Query values are percent-encoded outside the RFC 3986 unreserved characters, so a term
+  /// containing `+`, `&`, `=`, or `%` reaches the provider exactly as stored in the query. No
+  /// document-type condition is added.
+  ///
+  /// ```swift
+  /// let endpoint = Endpoint<DocumentPage>.searchDocuments(
+  ///   matching: try DocumentSearchQuery(term: "clean water"))
+  /// ```
+  /// - Parameter query: Validated general search filters, order, and page size.
+  /// - Returns: A single-page endpoint. Sequence execution uses the separate request's continuation policy.
+  public static func searchDocuments(matching query: DocumentSearchQuery) -> Self {
+    builtIn(path: "/api/v1/documents.json?" + formEncodedQuery(query.queryItems))
   }
 }

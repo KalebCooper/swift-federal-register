@@ -202,7 +202,7 @@ public struct FederalRegisterClient: Sendable {
     let followsLinks: Bool
     switch request.resolution {
     case .endpoint: followsLinks = false
-    case .presidentialDocuments: followsLinks = true
+    case .documentSearch, .presidentialDocuments: followsLinks = true
     }
     let base = client.pages(
       self.request(for: request.endpoint), as: SourceResponse<DocumentPage>.self,

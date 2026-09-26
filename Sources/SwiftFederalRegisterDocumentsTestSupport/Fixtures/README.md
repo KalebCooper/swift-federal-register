@@ -33,3 +33,8 @@ The `search_after_cursor=invalid` probe (September 24, 2026 UTC) returned HTTP 4
 that capture; the full request query line was never logged, so the receipt and the `Fixture` doc
 comment state only the evidenced `search_after_cursor=invalid` fragment rather than an invented
 complete query.
+
+The two-word term search `search-spaced-term-page-one.json` (`conditions[term]=clean%20water`, newest,
+two per page) was retrieved from the official documents route on September 26, 2026 UTC with the same
+User-Agent. Its `next_page_url` is kept as published: the provider writes the space as `+` in the
+query and gives a `page` number with no `search_after_cursor`.

@@ -36,6 +36,18 @@ All notable changes will be documented here, following Keep a Changelog and Sema
   `regulationIDNumbers`, `regulationsDotGovURL`, and `significant`, with the `CFRReference`,
   `DocumentType`, `DocumentTypeCode`, and `RegulationIDNumberInfo` models. Dates stay source strings,
   `type` is unchanged, and an unexpected JSON kind makes a projection nil while `fields` keeps the value.
+- `DocumentSearchQuery`, `DocumentDateFilter`, and `CFRFilter`, validated general search filters for
+  agencies, CFR title and part, docket identifier, effective and publication dates as an exact day,
+  inclusive range, or year, Regulation Identifier Number, full-text term, and document types, with no
+  implicit type condition. Filter strings are kept exactly as given; repeated agencies and types are
+  sent with their multiplicity. `DocumentValidationError` gains `emptyFilterValue`, `invalidCFRFilter`,
+  `invalidDateRange`, and `invalidYear`; exhaustive switches over it need those arms.
+- `Endpoint<DocumentPage>.searchDocuments(matching:)` and `DocumentRequest.searchDocuments(matching:)`
+  for general searches. Query values are percent-encoded outside the RFC 3986 unreserved characters, so
+  a term containing `+`, `&`, `=`, or `%` reaches the provider as given. The request resolves to the new
+  `DocumentRequest.Resolution.documentSearch` case, whose sequence follows validated cursor links;
+  exhaustive switches over `Resolution` need that arm. The provider publishes term searches' next links
+  with a page number and no cursor, so their continuation fails with `missingCursor`.
 - Source verification, pinned Linux test/demo/documentation scripts, and pending Apple/Android CI lanes.
 
 ### Changed
@@ -46,4 +58,6 @@ All notable changes will be documented here, following Keep a Changelog and Sema
 
 ### Fixed
 
+- Page continuations compare queries as the provider parses them, reading `+` as a space, so a
+  published `clean+water` matches a sent `clean%20water`.
 - Removed force unwraps from custom request test factories rejected by the CI formatter.

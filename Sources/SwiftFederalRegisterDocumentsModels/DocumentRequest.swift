@@ -12,6 +12,8 @@ import Foundation
 public struct DocumentRequest<Response>: Hashable, Sendable {
   /// A transport-free resolution containing only endpoint values and continuation policy.
   public enum Resolution: Hashable, Sendable {
+    /// A library-created general search whose sequence follows validated cursor links.
+    case documentSearch(Endpoint<Response>)
     /// One endpoint, with no automatic continuation.
     case endpoint(Endpoint<Response>)
     /// A library-created presidential search whose sequence follows validated cursor links.
@@ -21,7 +23,9 @@ public struct DocumentRequest<Response>: Hashable, Sendable {
   /// The underlying independently executable endpoint.
   public var endpoint: Endpoint<Response> {
     switch resolution {
-    case .endpoint(let endpoint), .presidentialDocuments(let endpoint): return endpoint
+    case .documentSearch(let endpoint), .endpoint(let endpoint),
+      .presidentialDocuments(let endpoint):
+      return endpoint
     }
   }
 
@@ -71,5 +75,21 @@ extension DocumentRequest where Response == DocumentPage {
   /// - Returns: A request whose single-value execution still retrieves only its first page.
   public static func presidentialDocuments(matching query: DocumentQuery) -> Self {
     Self(resolution: .presidentialDocuments(.presidentialDocuments(matching: query)))
+  }
+
+  /// Describes a general document search with cursor continuation for lazy sequence execution.
+  ///
+  /// The provider publishes a term search's next link with a page number and no cursor, so a
+  /// sequence over a search with a `term` fails with `DocumentPaginationError.missingCursor`
+  /// after its first page.
+  ///
+  /// ```swift
+  /// let request = DocumentRequest.searchDocuments(
+  ///   matching: try DocumentSearchQuery(agencies: [.environmentalProtectionAgency]))
+  /// ```
+  /// - Parameter query: Immutable validated general search filters.
+  /// - Returns: A request whose single-value execution still retrieves only its first page.
+  public static func searchDocuments(matching query: DocumentSearchQuery) -> Self {
+    Self(resolution: .documentSearch(.searchDocuments(matching: query)))
   }
 }

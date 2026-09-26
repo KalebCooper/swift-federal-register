@@ -230,6 +230,16 @@
     "url": "https://www.federalregister.gov/api/v1/documents.json?order=newest&per_page=2&conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D=codexNoMatchingDocument987654321"
   },
   {
+    "byteCount": 4204,
+    "file": "search-spaced-term-page-one.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T19:28:15+00:00",
+    "sha256": "f9bdb534ca5bfc4624644af0ef23808f676226cdeed3a91dd6cd1d34c55d249d",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents.json?conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D=clean%20water&order=newest&per_page=2"
+  },
+  {
     "byteCount": 60,
     "file": "invalid-cursor.json",
     "mediaType": "application/json; charset=utf-8",
