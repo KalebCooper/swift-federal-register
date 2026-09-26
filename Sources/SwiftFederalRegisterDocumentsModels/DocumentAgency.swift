@@ -26,7 +26,8 @@ public struct DocumentAgency: Codable, Hashable, Sendable {
   public var jsonURL: String? { fields["json_url"]?.string }
   /// The provider's current display name for the matched agency.
   public var name: String? { fields["name"]?.string }
-  /// The numeric identifier of the provider's parent agency, or nil for a top-level agency.
+  /// The numeric identifier of the provider's parent agency; nil for a top-level agency and when the
+  /// key is absent, null, or of another JSON kind.
   public var parentID: Int? { fields["parent_id"]?.int }
   /// The agency name as printed on the document, without normalization.
   public var rawName: String? { fields["raw_name"]?.string }
