@@ -88,7 +88,7 @@ completed successfully at `22371b9`. The table below records this completed qual
 | --- | --- |
 | Android | Passed all 29 tests in three suites on the emulator with Swift 6.3.3 and HTTPPortable. |
 | Apple package tests | Passed all three Swift Testing suites on iPhone 18 Pro / iOS 27 with Xcode 27. |
-| DocC | Both catalogs, merged archive, static site, and uploaded artifact passed. Pages deployment remains disabled. |
+| DocC | Both catalogs, merged archive, static site, and uploaded artifact passed. Pages deployment was disabled for these runs and is now enabled for main pushes and manual workflow runs. |
 | Linux | Passed all 29 tests in three suites under both HTTPPortable and default traits. |
 | Release demo | Hosted simulator Release build passed. This does not establish Debug build or runtime behavior. |
 | Source verification and lint | Passed after replacing force unwraps with throwing #require accessors. Both hosted checks and all 45 source-checker self-test arms passed. Local checks also passed using the CI Swift 6.3.3 image. |
@@ -99,8 +99,9 @@ GitHub origin is configured and main is pushed. No tag or release is published.
 
 Finish iOS demo Debug build and runtime verification. Linux, Android, Apple, lint,
 source verification, and DocC build jobs are enabled and have completed successfully.
-GitHub Pages deployment remains disabled pending the documentation delivery decision;
-timeouts remain provisional.
+GitHub Pages is configured for GitHub Actions deployment, and the workflow publishes documentation
+on main pushes and manual runs. Pull requests build the documentation without deploying it.
+Timeouts remain provisional.
 
 Use `bash Scripts/verify.sh` and `--self-test` for implementation changes. The historical scaffold validator
 is no longer an applicable source gate and is not run by the source checker self-test. No missing-subject

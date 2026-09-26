@@ -53,8 +53,8 @@ jobs:
     name: Deploy to GitHub Pages
     needs: build
     runs-on: ubuntu-latest
-    # Publishing remains disabled pending the documentation delivery decision.
-    if: ${{ false }}
+    # Publish only main; pull requests build documentation without deploying it.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     # Provisional until this package has green runs on main.
     timeout-minutes: 15
     environment:
