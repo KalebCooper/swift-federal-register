@@ -20,6 +20,9 @@ public enum DocumentPaginationError: Error, Hashable, Sendable {
 
 extension DocumentPage {
   /// Validates the next provider cursor without using the capped page total as a limit.
+  ///
+  /// Both queries are compared as the provider parses them, reading `+` as a space before
+  /// decoding percent escapes, so a published `clean+water` matches a sent `clean%20water`.
   /// - Parameters:
   ///   - endpoint: The endpoint that produced this page.
   ///   - seenCursors: Every cursor already scheduled by this iterator.
@@ -36,7 +39,7 @@ extension DocumentPage {
       components.path == "/api/v1/documents" || components.path == "/api/v1/documents.json",
       let current = URLComponents(string: "https://www.federalregister.gov" + endpoint.path)
     else { throw .invalidLink(nextPageURL) }
-    let items = components.queryItems ?? []
+    let items = Self.formItems(components)
     let cursors = items.filter { $0.name == "search_after_cursor" }
     guard cursors.count == 1, let cursor = cursors.first?.value, !cursor.isEmpty else {
       throw .missingCursor
@@ -51,7 +54,14 @@ extension DocumentPage {
         ($0.name, $0.value ?? "") < ($1.name, $1.value ?? "")
       }
     }
-    guard filters(items) == filters(current.queryItems ?? []) else { throw .changedQuery }
+    guard filters(items) == filters(Self.formItems(current)) else { throw .changedQuery }
     return (next, cursor)
+  }
+
+  /// Decodes a query as the provider's form parser does: `+` is a space, then escapes decode.
+  private static func formItems(_ components: URLComponents) -> [URLQueryItem] {
+    var decoded = components
+    decoded.percentEncodedQuery = components.percentEncodedQuery?.replacing("+", with: "%20")
+    return decoded.queryItems ?? []
   }
 }

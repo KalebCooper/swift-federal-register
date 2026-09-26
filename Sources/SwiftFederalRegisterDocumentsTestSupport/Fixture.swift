@@ -59,6 +59,10 @@ package enum Fixture: String, CaseIterable, Sendable {
   /// `/api/v1/documents.json?order=relevance&per_page=2&conditions[publication_date][gte]=2024-01-01`
   /// `&conditions[publication_date][lte]=2024-12-31&conditions[term]=water`.
   case searchRelevancePageOne = "search-relevance-page-one.json"
+  /// `/api/v1/documents.json?conditions[publication_date][gte]=2024-01-01`
+  /// `&conditions[publication_date][lte]=2024-12-31&conditions[term]=clean%20water&order=newest`
+  /// `&per_page=2`. Its `next_page_url` sends the space as `+` and carries no search_after_cursor.
+  case searchSpacedTermPageOne = "search-spaced-term-page-one.json"
   /// `/api/v1/documents.json?order=newest&per_page=2&conditions[publication_date][gte]=2024-01-01`
   /// `&conditions[publication_date][lte]=2024-12-31&conditions[term]=codexNoMatchingDocument987654321`.
   case searchTerminal = "search-terminal.json"

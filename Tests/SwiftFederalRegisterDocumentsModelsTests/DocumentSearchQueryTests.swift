@@ -328,4 +328,275 @@ struct DocumentSearchQueryTests {
         URLQueryItem(name: "per_page", value: "20"),
       ])
   }
+
+  /// A one-result page whose next link is the given literal; nil omits the key.
+  private func page(next link: String?) throws -> DocumentPage {
+    let next = link.map { #","next_page_url":""# + $0 + #"""# } ?? ""
+    return try DocumentPage.decode(
+      Data(
+        (#"{"count":1"# + next
+          + #","results":[{"document_number":"2024-31396","title":"Example"}],"total_pages":1}"#)
+          .utf8))
+  }
+
+  @Test(
+    "A general search endpoint reproduces each recorded request query byte for byte",
+    arguments: RecordedSearch.allCases)
+  func aGeneralSearchEndpointReproducesEachRecordedRequestQueryByteForByte(
+    _ search: RecordedSearch
+  ) throws {
+    let endpoint = Endpoint<DocumentPage>.searchDocuments(matching: try search.query())
+    let sent = endpoint.path.split(separator: "?", maxSplits: 1)
+    let recorded = search.url.split(separator: "?", maxSplits: 1)
+    #expect(sent[0] == "/api/v1/documents.json")
+    #expect(recorded[0] == "https://www.federalregister.gov/api/v1/documents.json")
+    #expect(
+      sent[1].split(separator: "&").sorted() == recorded[1].split(separator: "&").sorted())
+    #expect(endpoint.accept == "application/json")
+  }
+
+  @Test("A general search request resolves to its endpoint with cursor continuation")
+  func aGeneralSearchRequestResolvesToItsEndpointWithCursorContinuation() throws {
+    let query = try DocumentSearchQuery(agencies: [.environmentalProtectionAgency])
+    let stored = DocumentRequest.searchDocuments(matching: query)
+    let contextual: DocumentRequest<DocumentPage> = .searchDocuments(matching: query)
+    let endpoint = Endpoint<DocumentPage>.searchDocuments(matching: query)
+    #expect(stored.resolution == .documentSearch(endpoint))
+    #expect(stored.endpoint == endpoint)
+    #expect(contextual == stored)
+    #expect(
+      endpoint.path
+        == "/api/v1/documents.json?conditions%5Bagencies%5D%5B%5D=environmental-protection-agency"
+        + "&order=newest&per_page=20")
+    let rules = try DocumentRequest.environmentalRules()
+    let rulesEndpoint = try #require(
+      Endpoint<DocumentPage>(
+        path:
+          "/api/v1/documents.json?conditions%5Bagencies%5D%5B%5D=environmental-protection-agency"
+          + "&conditions%5Btype%5D%5B%5D=RULE&order=newest&per_page=20"))
+    #expect(rules.resolution == .documentSearch(rulesEndpoint))
+    #expect(continuationPolicy(of: stored.resolution) == "follows search cursors")
+    #expect(
+      continuationPolicy(of: DocumentRequest(endpoint: endpoint).resolution) == "single page")
+    #expect(
+      continuationPolicy(
+        of: DocumentRequest.presidentialDocuments(matching: try DocumentQuery()).resolution)
+        == "follows presidential cursors")
+  }
+
+  @Test("A general search sends a literal plus and reserved characters percent-encoded")
+  func aGeneralSearchSendsALiteralPlusAndReservedCharactersPercentEncoded() throws {
+    let term = "clean+water & air=soil; a?b#c%d/\u{E9}"
+    let endpoint = Endpoint<DocumentPage>.searchDocuments(
+      matching: try DocumentSearchQuery(term: term))
+    #expect(
+      endpoint.path
+        == "/api/v1/documents.json?conditions%5Bterm%5D="
+        + "clean%2Bwater%20%26%20air%3Dsoil%3B%20a%3Fb%23c%25d%2F%C3%A9&order=newest&per_page=20")
+    #expect(!endpoint.path.contains("+"))
+    let sent = try #require(
+      URLComponents(string: "https://www.federalregister.gov" + endpoint.path)?.queryItems)
+    #expect(sent.first { $0.name == "conditions[term]" }?.value == term)
+  }
+
+  @Test("A general search with a spaced term matches its recorded request exactly")
+  func aGeneralSearchWithASpacedTermMatchesItsRecordedRequestExactly() throws {
+    // Receipt URL of Fixtures/search-spaced-term-page-one.json.
+    let query = try DocumentSearchQuery(
+      pageSize: 2, publicationDate: .range(from: "2024-01-01", through: "2024-12-31"),
+      term: "clean water")
+    #expect(
+      Endpoint<DocumentPage>.searchDocuments(matching: query).path
+        == "/api/v1/documents.json?conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
+        + "&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D=clean%20water"
+        + "&order=newest&per_page=2")
+    #expect(
+      Endpoint<DocumentPage>.searchDocuments(matching: try RecordedSearch.newest.query()).path
+        == "/api/v1/documents.json?conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
+        + "&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&order=newest&per_page=2")
+  }
+
+  @Test("A provider plus in a next link compares as a space and an escaped plus as a plus")
+  func aProviderPlusInANextLinkComparesAsASpaceAndAnEscapedPlusAsAPlus() throws {
+    // Synthetic cursors appended to link shapes the provider publishes; see the spaced-term fixture.
+    let spaced = try DocumentSearchQuery(term: "clean water")
+    let root = "https://www.federalregister.gov/api/v1/documents?"
+    let tail = "&format=json&order=newest&page=2&per_page=20&search_after_cursor=abc"
+    let next = try #require(
+      try page(next: root + "conditions%5Bterm%5D=clean+water" + tail).continuation(
+        after: .searchDocuments(matching: spaced), seenCursors: []))
+    #expect(next.cursor == "abc")
+    let plus = try DocumentSearchQuery(term: "a+b")
+    #expect(
+      try page(next: root + "conditions%5Bterm%5D=a%2Bb" + tail).continuation(
+        after: .searchDocuments(matching: plus), seenCursors: [])?.cursor == "abc")
+    #expect(throws: DocumentPaginationError.changedQuery) {
+      try page(next: root + "conditions%5Bterm%5D=a+b" + tail).continuation(
+        after: .searchDocuments(matching: plus), seenCursors: [])
+    }
+  }
+
+  @Test("A repeated fields selection survives the continuation comparison")
+  func aRepeatedFieldsSelectionSurvivesTheContinuationComparison() throws {
+    // Receipt URL of Fixtures/search-fields-page-one.json, rebuilt from its 56 field names.
+    let fields = [
+      "abstract", "action", "agencies", "agency_names", "amendatory_instructions", "body_html_url",
+      "cfr_references", "cfr_topics", "citation", "comment_url", "comments_close_on",
+      "correction_of", "corrections", "dates", "disposition_notes", "docket_id", "docket_ids",
+      "dockets", "document_number", "effective_on", "end_page", "excerpts", "executive_order_notes",
+      "executive_order_number", "explanation", "full_text_xml_url", "html_url", "images",
+      "images_metadata", "json_url", "mods_url", "not_received_for_publication", "page_length",
+      "page_views", "pdf_url", "president", "presidential_document_number", "proclamation_number",
+      "public_inspection_pdf_url", "publication_date", "raw_text_url", "regulation_id_number_info",
+      "regulation_id_numbers", "regulations_dot_gov_info", "regulations_dot_gov_url",
+      "related_documents", "significant", "signing_date", "start_page", "subtype", "title",
+      "toc_doc", "toc_subject", "topics", "type", "volume",
+    ]
+    let base =
+      "https://www.federalregister.gov/api/v1/documents.json?order=newest&per_page=2"
+      + "&conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
+      + "&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31"
+      + "&conditions%5Bagencies%5D%5B%5D=environmental-protection-agency"
+      + "&conditions%5Btype%5D%5B%5D=RULE"
+    let pageOne = try DocumentPage.decode(Fixture.searchFieldsPageOne.data())
+    let pageTwo = try DocumentPage.decode(Fixture.searchFieldsPageTwo.data())
+    let first = try #require(
+      Endpoint<DocumentPage>(link: base + fields.map { "&fields%5B%5D=" + $0 }.joined()))
+    let second = try #require(try pageOne.continuation(after: first, seenCursors: []))
+    #expect(second.cursor == "WzE3MzU1MTY4MDAwMDAsIjIwMjQtMzA3NDciXQ")
+    #expect(
+      "https://www.federalregister.gov" + second.endpoint.path == pageOne.nextPageURL)
+    let third = try #require(
+      try pageTwo.continuation(after: second.endpoint, seenCursors: [second.cursor]))
+    #expect(third.cursor == "WzE3MzU1MTY4MDAwMDAsIjIwMjQtMzA3MzQiXQ")
+    #expect("https://www.federalregister.gov" + third.endpoint.path == pageTwo.nextPageURL)
+    let fewer = try #require(
+      Endpoint<DocumentPage>(
+        link: base + fields.dropLast().map { "&fields%5B%5D=" + $0 }.joined()))
+    #expect(throws: DocumentPaginationError.changedQuery) {
+      try pageOne.continuation(after: fewer, seenCursors: [])
+    }
+  }
+
+  @Test("A search page without a next link ends continuation")
+  func aSearchPageWithoutANextLinkEndsContinuation() throws {
+    let endpoint = Endpoint<DocumentPage>.searchDocuments(matching: try DocumentSearchQuery())
+    #expect(try page(next: nil).continuation(after: endpoint, seenCursors: []) == nil)
+    let explicitNull = try DocumentPage.decode(
+      Data(
+        #"{"count":1,"next_page_url":null,"results":[{"document_number":"2024-31396","title":"Example"}],"total_pages":1}"#
+          .utf8))
+    #expect(try explicitNull.continuation(after: endpoint, seenCursors: []) == nil)
+    // The recorded zero-match body has only description and count, which a page does not decode yet.
+    #expect(throws: (any Error).self) {
+      try DocumentPage.decode(Fixture.searchTerminal.data())
+    }
+  }
+
+  @Test(
+    "Search continuations refuse links outside the permitted search routes",
+    arguments: [
+      "https://www.federalregister.gov/api/v1/agencies.json?search_after_cursor=x",
+      "https://www.federalregister.gov/api/v1/agencies/environmental-protection-agency.json?search_after_cursor=x",
+      "https://www.federalregister.gov/api/v1/documents/2024-31396.json?search_after_cursor=x",
+      "https://www.federalregister.gov/documents/full_text/text/2024/12/31/2024-31396.txt?search_after_cursor=x",
+      "https://example.gov/api/v1/documents?order=newest&per_page=20&search_after_cursor=x",
+      "https://user:secret@www.federalregister.gov/api/v1/documents?order=newest&per_page=20&search_after_cursor=x",
+      "https://www.federalregister.gov/api/v1/documents?order=newest&per_page=20&search_after_cursor=x#top",
+      "http://www.federalregister.gov/api/v1/documents?order=newest&per_page=20&search_after_cursor=x",
+      "https://www.federalregister.gov:8443/api/v1/documents?order=newest&per_page=20&search_after_cursor=x",
+    ])
+  func searchContinuationsRefuseLinksOutsideThePermittedSearchRoutes(_ link: String) throws {
+    // Synthetic literals: no capture publishes a next link outside the documents search route.
+    let endpoint = Endpoint<DocumentPage>.searchDocuments(matching: try DocumentSearchQuery())
+    #expect(throws: DocumentPaginationError.invalidLink(link)) {
+      try page(next: link).continuation(after: endpoint, seenCursors: [])
+    }
+  }
+
+  @Test("Search continuations follow the recorded newest and oldest cursor links")
+  func searchContinuationsFollowTheRecordedNewestAndOldestCursorLinks() throws {
+    let shared =
+      "/api/v1/documents?conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
+      + "&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&format=json&order="
+    let recorded: [(Fixture, Fixture, RecordedSearch, [String], [String])] = [
+      (
+        .searchNewestPageOne, .searchNewestPageTwo, .newest,
+        [
+          shared
+            + "newest&page=2&per_page=2&search_after_cursor=WzE3MzU2MDMyMDAwMDAsIjIwMjQtMzE0MzkiXQ",
+          shared
+            + "newest&page=3&per_page=2&search_after_cursor=WzE3MzU2MDMyMDAwMDAsIjIwMjQtMzE0MzciXQ",
+        ],
+        ["WzE3MzU2MDMyMDAwMDAsIjIwMjQtMzE0MzkiXQ", "WzE3MzU2MDMyMDAwMDAsIjIwMjQtMzE0MzciXQ"]
+      ),
+      (
+        .searchOldestPageOne, .searchOldestPageTwo, .oldest,
+        [
+          shared
+            + "oldest&page=2&per_page=2&search_after_cursor=WzE3MDQxNTM2MDAwMDAsIjIwMjMtMjc3ODMiXQ",
+          shared
+            + "oldest&page=3&per_page=2&search_after_cursor=WzE3MDQxNTM2MDAwMDAsIjIwMjMtMjc5MDUiXQ",
+        ],
+        ["WzE3MDQxNTM2MDAwMDAsIjIwMjMtMjc3ODMiXQ", "WzE3MDQxNTM2MDAwMDAsIjIwMjMtMjc5MDUiXQ"]
+      ),
+    ]
+    for (one, two, search, paths, cursors) in recorded {
+      let first = Endpoint<DocumentPage>.searchDocuments(matching: try search.query())
+      let second = try #require(
+        try DocumentPage.decode(one.data()).continuation(after: first, seenCursors: []))
+      #expect(second.endpoint.path == paths[0])
+      #expect(second.cursor == cursors[0])
+      let third = try #require(
+        try DocumentPage.decode(two.data()).continuation(
+          after: second.endpoint, seenCursors: [second.cursor]))
+      #expect(third.endpoint.path == paths[1])
+      #expect(third.cursor == cursors[1])
+    }
+  }
+
+  @Test("Term and relevance searches publish page numbers without a cursor")
+  func termAndRelevanceSearchesPublishPageNumbersWithoutACursor() throws {
+    let spaced = try DocumentSearchQuery(
+      pageSize: 2, publicationDate: .range(from: "2024-01-01", through: "2024-12-31"),
+      term: "clean water")
+    let spacedPage = try DocumentPage.decode(Fixture.searchSpacedTermPageOne.data())
+    #expect(
+      spacedPage.nextPageURL
+        == "https://www.federalregister.gov/api/v1/documents?conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
+        + "&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D=clean+water"
+        + "&format=json&order=newest&page=2&per_page=2")
+    #expect(throws: DocumentPaginationError.missingCursor) {
+      try spacedPage.continuation(after: .searchDocuments(matching: spaced), seenCursors: [])
+    }
+    // Receipt URL of Fixtures/search-relevance-page-one.json; relevance order is not a query option.
+    let relevance = try #require(
+      Endpoint<DocumentPage>(
+        link: "https://www.federalregister.gov/api/v1/documents.json?order=relevance&per_page=2"
+          + "&conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
+          + "&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D=water"))
+    #expect(throws: DocumentPaginationError.missingCursor) {
+      try DocumentPage.decode(Fixture.searchRelevancePageOne.data()).continuation(
+        after: relevance, seenCursors: [])
+    }
+  }
+
+  /// Names each resolution; the switch compiles only while it covers every case.
+  private func continuationPolicy(of resolution: DocumentRequest<DocumentPage>.Resolution)
+    -> String
+  {
+    switch resolution {
+    case .documentSearch: "follows search cursors"
+    case .endpoint: "single page"
+    case .presidentialDocuments: "follows presidential cursors"
+    }
+  }
+}
+
+extension DocumentRequest where Response == DocumentPage {
+  /// A consumer-defined general search for Environmental Protection Agency rules.
+  fileprivate static func environmentalRules() throws -> Self {
+    .searchDocuments(
+      matching: try DocumentSearchQuery(agencies: [.environmentalProtectionAgency], types: [.rule]))
+  }
 }
