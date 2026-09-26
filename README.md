@@ -2,38 +2,45 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Portable Swift models and an SDK for Federal Register documents.
+Swift models and a typed client for the [Federal Register API](https://www.federalregister.gov/developers/documentation/api/v1).
+
+`SwiftFederalRegisterDocumentsModels` describes each supported FederalRegister.gov request as a plain
+value and decodes every response, so any networking stack can send them. `SwiftFederalRegisterDocuments`
+sends them for you through [swifty-networking](https://github.com/KalebCooper/swifty-networking),
+pages search results on demand, and maps failures into one typed error. Both run on Apple platforms,
+Linux, and Android.
+
+The full reference is the
+[documentation site](https://kalebcooper.github.io/swift-federal-register/documentation/).
 
 ## Status
 
-Implemented locally: document detail, presidential-document searches, general document search filtered by
-agency, CFR location, docket, effective and publication date, Regulation Identifier Number, term, and type,
-regulatory metadata projections, agency discovery, lazy cursor and page-number sequences, raw response
-receipts, and lossless UTF-8 content from advertised HTML, text, and XML links. Models preserve every JSON
-field, explicit null, unknown code, and conflicting date assertion. `agencies()` retrieves the complete
-agency list and `agency(_:)` one agency's detail by slug, each in one request with no logo or link fetching.
-`searchDocuments(matching:)` retrieves the first page of a general document search built from
-`DocumentSearchQuery` filters; a zero-match search returns one empty page. `documents(searching:)`,
-`documentPages(searching:)`, and `documentResponses(searching:)` traverse it lazily, following the provider's
-validated cursor or page-number links with no prefetch. `FederalRegisterDocument` projects CFR references,
-Regulation Identifier Numbers, docket identifiers, the `significant` flag, and `DocumentType` from `fields`;
-search results carry only the provider's default projection, so most of these stay nil there by design.
-There is no published release.
+There is no tagged release yet, and the public API may change before one. Every change is recorded
+in [CHANGELOG.md](CHANGELOG.md).
 
-Current and 1994 fixtures are verified. Historical PDF/XML links can be null, and an advertised HTML link
-returned 404; no replacement format is inferred. Text responses can contain HTML wrappers. PDF/MODS links
-are retained but not downloaded. Content decoding does not render HTML or parse XML into an element model.
+| Feature | Service routes | Client methods | Paged |
+|---|---|---|---|
+| Document detail | `/api/v1/documents/{number}.json` | `document(_:)` | No |
+| Full text | a document's advertised HTML, text, and XML links | `content(_:for:)` | No |
+| Document search | `/api/v1/documents.json` | `searchDocuments(matching:)`, `documents(searching:)` | Yes |
+| Presidential documents | `/api/v1/documents.json`, presidential type | `presidentialDocuments(matching:)`, `documents(matching:)` | Yes |
+| Agencies | `/api/v1/agencies.json`, `/api/v1/agencies/{slug}.json` | `agencies()`, `agency(_:)` | No |
 
-FederalRegister.gov is an informational rendition from OFR/NARA and GPO; GPO publishes the official edition.
-This package promises neither complete presidential history nor stable snapshots, freshness, or format
-availability. General search offers newest and oldest chronological order only; relevance order is not a
-query option, and a consumer-built relevance `Endpoint` yields a single page, continued only by validating
-its next link directly with `DocumentPage.continuation(after:seenCursors:)`. Repeated `agencies` and `types`
-filters are sent with their multiplicity; the provider does not document an AND, OR, or parent-agency
-combination rule for them. `total_pages` can be capped while a next link keeps continuing, so it never stops
-traversal, and pages beyond the provider's depth cap are not guaranteed. Absence from the Federal Register
-does not prove absence of a presidential action. See
-[verification and remaining gates](IMPLEMENTATION_READINESS.md).
+Also built: regulatory metadata on each document (CFR references, Regulation Identifier Numbers,
+dockets, document type, significance), raw response receipts that keep the exact bytes and
+publisher attribution, and validated following of every next-page link the service returns.
+
+What the package does not guarantee, because the service does not:
+
+- **Completeness.** A search is not a stable snapshot. `total_pages` can be capped while the next
+  link keeps going, and pages beyond the service's depth limit are not promised. A missing record
+  does not prove that an action did not occur.
+- **Format availability.** Older documents can have null PDF or XML links, and an advertised link can
+  still return 404. No replacement link is guessed.
+- **Normalization.** Dates stay as the strings the service sent, and a publication date is not the
+  date of the action a document records. Conflicting dates are kept side by side.
+- **Official status.** FederalRegister.gov is an informational rendition from OFR/NARA and GPO. GPO
+  publishes the official edition.
 
 ## Usage
 
@@ -43,93 +50,209 @@ import SwiftFederalRegisterDocumentsModels
 
 let client = FederalRegisterClient(userAgent: "(MyApp, contact@example.com)")
 
-// Explicit document detail, at three equivalent levels.
-let document = try await client.document("93-32104")
-let request = try DocumentRequest.document("93-32104")
-let same = try await client.value(for: request)
-let direct = try await client.send(.document("93-32104"))
+let document = try await client.document("2024-31396")
+print(document.title, document.publicationDate ?? "")
+```
 
-// General document search, then its typed regulatory metadata.
-let search = try DocumentSearchQuery(
+The API needs no key. The client requires a `User-Agent` naming your application and has no
+default. On Apple platforms, `userAgent:` sends through the shared URL session; pass `session:` for
+your own, or use `FederalRegisterClient(transport:userAgent:)` with any swifty-networking transport.
+
+Every operation is available at three levels, and all three share one executor:
+
+```swift
+let everyday = try await client.document("2024-31396")               // the domain value
+let reusable = try await client.value(for: .document("2024-31396"))  // a stored, inspectable request
+let direct = try await client.send(.document("2024-31396"))          // one HTTP operation
+```
+
+### Searching documents
+
+```swift
+let query = try DocumentSearchQuery(
   agencies: [.environmentalProtectionAgency],
   publicationDate: .range(from: "2024-01-01", through: "2024-12-31"),
+  term: "water",
   types: [.rule])
-let page = try await client.searchDocuments(matching: search)
-for try await result in client.documents(searching: search) {
-  print(result.documentNumber, result.cfrReferences ?? [])
-}
 
-// Agency discovery.
-let agencyList = try await client.agencies()
-let epa = try await client.agency(.environmentalProtectionAgency)
-print(agencyList.agencies.count, epa.name ?? "")
+let firstPage = try await client.searchDocuments(matching: query)
 
-let query = try DocumentQuery(pageSize: 20, publishedFrom: "1994-01-01", publishedThrough: "1994-12-31")
-for try await presidentialDocument in client.documents(matching: query) {
-  print(presidentialDocument.documentNumber, presidentialDocument.title)
-}
-for try await receipt in client.documentResponses(matching: query) {
-  print(receipt.requestURL, receipt.body.count)
+for try await result in client.documents(searching: query) {
+  print(result.documentNumber, result.title)
 }
 ```
 
-Use `documentPages(matching:)` and `documentPages(searching:)` for page envelopes, and
-`presidentialDocuments(matching:)` and `searchDocuments(matching:)` for one page. Request-based sequence
-overloads accept `.presidentialDocuments(matching:)` and `.searchDocuments(matching:)`; custom endpoint
-requests yield one page only. Every iterator is independent, performs no construction I/O or prefetch,
-checks cancellation, and terminates after a failure. Provider order and duplicates remain intact. Capped
-`total_pages` never stops a cursor or page-number traversal; unsafe, changed, missing, repeated, or
-nonprogressing continuations throw typed errors.
+Filters cover agencies, CFR title and part, docket, effective and publication dates, Regulation
+Identifier Number, full-text term, and document type. Results come newest or oldest first. Search
+results carry only the service's default fields, so fetch a document's detail to read its full
+regulatory metadata:
 
-The API needs no key. The SDK sends once, refuses redirects, and preserves HTTP failure bodies and headers,
-including Retry-After. No numerical quota was verified. Callers own retry and backoff. Receipt timestamps
-are optional and supplied through `retrievalTime`; the default does not invent an instant. The default
-8 MiB decoding/receipt limit applies after transport buffering, not as a streaming memory limit.
+```swift
+if let result = firstPage.results.first {
+  let rule = try await client.document(result.documentNumber)
+  print(rule.cfrReferences ?? [], rule.regulationIDNumbers ?? [], rule.docketIDs ?? [])
+}
+```
+
+### Presidential documents
+
+```swift
+let query = try DocumentQuery(publishedFrom: "1994-01-01", publishedThrough: "1994-12-31")
+for try await document in client.documents(matching: query) {
+  print(document.documentNumber, document.signingDate ?? "", document.title)
+}
+```
+
+`DocumentQuery` always searches presidential documents, optionally narrowed by president and
+presidential document type.
+
+### Paging
+
+`documents(searching:)` and `documents(matching:)` yield one document at a time.
+`documentPages(searching:)` and `documentPages(matching:)` yield whole pages.
+
+```swift
+for try await page in client.documentPages(searching: query) {
+  print(page.count, page.results.count)
+}
+```
+
+Sequences are lazy, never prefetch, and start over for each iterator. They keep the service's order
+and duplicates. A next link from another origin, with changed filters, or one that does not move
+forward throws `FederalRegisterError.pagination` before its page is fetched. Break out of the loop
+when you have enough.
+
+### Agencies
+
+```swift
+let catalog = try await client.agencies()
+let epa = try await client.agency(.environmentalProtectionAgency)
+print(catalog.agencies.count, epa.name ?? "", epa.childSlugs ?? [])
+```
+
+`AgencyIdentifier` is an open slug. Its static members are a convenience generated from one
+recorded catalog; any other slug works through `AgencyIdentifier(rawValue:)`. Call `agencies()` for
+the current list.
+
+### Full text
+
+```swift
+let text = try await client.content(.text, for: document)
+print(text.source)
+```
+
+HTML, text, and XML come back as the exact UTF-8 source, markup included. A representation the
+document does not advertise fails with `FederalRegisterError.content` before anything is sent. PDF
+and MODS links are available on the document but never downloaded.
+
+### Raw responses
+
+```swift
+let receipt = try await client.response(for: DocumentRequest.document("2024-31396"))
+print(receipt.status, receipt.requestURL, receipt.publisher, receipt.body.count)
+
+for try await receipt in client.documentResponses(searching: query) {
+  print(receipt.requestURL)
+}
+```
+
+A receipt holds the decoded value alongside the exact bytes, status, and header fields it came
+from, with no second request.
+
+### Reusable requests
+
+Creating a request performs no I/O. Name your own:
+
+```swift
+extension DocumentRequest where Response == DocumentPage {
+  static func rules(from agency: AgencyIdentifier) throws -> Self {
+    .searchDocuments(matching: try DocumentSearchQuery(agencies: [agency], types: [.rule]))
+  }
+}
+
+let rules = try await client.value(for: .rules(from: .environmentalProtectionAgency))
+```
+
+`DocumentRequest(endpoint:)` wraps an `Endpoint` with a response model of your own, for a route this
+package does not build.
+
+### Other networking stacks
+
+A consumer with its own networking stack needs only `SwiftFederalRegisterDocumentsModels`:
+
+```swift
+let endpoint = try Endpoint<FederalRegisterDocument>.document("2024-31396")
+// GET https://www.federalregister.gov/api/v1/documents/2024-31396.json
+// Accept: application/json
+let document = try FederalRegisterDocument.decode(responseBody)
+```
+
+Send a GET to `https://www.federalregister.gov` plus `endpoint.path`, set `Accept` to
+`endpoint.accept`, and decode with the response type. Validate a next link with
+`DocumentPage.continuation(after:seenCursors:)` before following it.
+
+### Errors
+
+Every client method throws `FederalRegisterError`: input rejected before sending (`.validation`), an
+unavailable representation (`.content`), an unusable next link (`.pagination`), a body over the size
+limit (`.responseTooLarge`), a decoding failure, or a transport failure. HTTP errors keep their status,
+body, and header fields, including `Retry-After`. Each request is sent once, with no automatic retry
+or redirect; retries and backoff are yours.
 
 ## Example
 
-The [offline consumer demo](Examples/OfflineDemo/README.md) runs against attributed recorded responses and
-shows agency discovery, a two-page general search, typed regulatory metadata, historical date evidence,
-null formats, source text, and two presidential cursor pages. Run
-`bash Scripts/linux-demo.sh` to build and execute it in the pinned Linux container.
+[`Examples/SwiftFederalRegisterDocumentsDemo`](Examples/SwiftFederalRegisterDocumentsDemo) is an iOS
+app that searches documents by agency, term, and type, shows a result's regulatory metadata, browses
+the agency catalog, and loads a document's full text. It references this package by local path; open
+`SwiftFederalRegisterDocumentsDemo.xcodeproj` with the package itself closed in Xcode, since Xcode
+opens a local package in only one window.
 
-The iOS example is `Examples/SwiftFederalRegisterDocumentsDemo/SwiftFederalRegisterDocumentsDemo.xcodeproj`.
-It supports general search by agency, term, and document type with explicit next-page loading and a
-cancel control, typed regulatory metadata for a selected result, agency lookup by slug, the agency
-catalog, document lookup, source-content loading, and presidential next-page loading. Its Debug and
-Release simulator builds pass locally, and search, next-page loading, regulatory metadata, agency lookup,
-an invalid-slug error, the catalog, and presidential detail were checked on an iOS 27 simulator.
-Cancelling an in-flight page has not been observed at runtime and remains unverified.
-Close the standalone package workspace before opening the demo.
+[`Examples/OfflineDemo`](Examples/OfflineDemo) is a command-line tool that runs the same client
+against recorded responses, with no network access. See its [README](Examples/OfflineDemo/README.md).
 
 ## Products
 
-| Product | Contents |
-| --- | --- |
-| `SwiftFederalRegisterDocuments` | Client, typed failures, lazy page/item/receipt sequences. |
-| `SwiftFederalRegisterDocumentsModels` | Source values, content decoding, queries, requests, endpoints, receipts; no third-party dependencies. |
+| Product | What it is | Depends on |
+|---|---|---|
+| `SwiftFederalRegisterDocumentsModels` | `Codable` documents, pages, and agencies, validated search queries, typed `Endpoint` and `DocumentRequest` values, and full-text decoding. Usable with any networking stack. | Nothing. |
+| `SwiftFederalRegisterDocuments` | `FederalRegisterClient`, `FederalRegisterError`, and the lazy page, document, and receipt sequences. Re-exports swifty-networking's `HTTPCore`, so `Transport` and `TransportError` need no import of their own. | `SwiftFederalRegisterDocumentsModels`, swifty-networking, swift-http-types. |
+
+A consumer with its own networking stack adds only `SwiftFederalRegisterDocumentsModels` and fetches
+no dependency at all.
 
 ## Requirements
 
-Swift tools 6.2, Swift 6 language mode, and iOS/macOS/tvOS/visionOS/watchOS 26 floors. Linux validation uses
-Swift 6.3 in `swift:6.3-noble`, with both default traits and `HTTPPortable`. Hosted iOS 27 and Android
-tests last passed at `22371b9`, before general search and agency discovery; this candidate has local
-qualification only (see IMPLEMENTATION_READINESS.md). Cancelling an in-flight demo page is unverified.
-Enable `HTTPPortable` and inject a portable transport for Linux or Android networking.
-The default Apple convenience uses URLSession; default-trait Linux consumers supply their own transport.
+- Swift 6.2 or later.
+- iOS, macOS, tvOS, visionOS, and watchOS 26 or later, Linux, or Android.
+- `SwiftFederalRegisterDocuments` depends on
+  [swifty-networking](https://github.com/KalebCooper/swifty-networking) 1.3.1 or later and
+  [swift-http-types](https://github.com/apple/swift-http-types) 1.6.0 or later. On Apple platforms it
+  sends through `URLSession`. On Linux and Android, enable the off-by-default `HTTPPortable` trait,
+  which pulls in AsyncHTTPClient and SwiftNIO, and pass swifty-networking's
+  `AsyncHTTPClientTransport` to `FederalRegisterClient(transport:userAgent:)`. A consumer who leaves
+  the trait off never fetches or builds either.
 
 ## Installation
 
-Use a local path dependency until a public repository and release are published:
+Until the first release is tagged, depend on `main`:
 
 ```swift
-.package(path: "../swift-federal-register")
+.package(url: "https://github.com/KalebCooper/swift-federal-register.git", branch: "main")
 ```
 
-Choose either product independently. SDK dependencies use the verified public swifty-networking `1.3.1`
-minimum and swift-http-types. `Package.resolved` records the HTTPPortable-enabled dependency superset.
+On Linux or Android, enable the trait on the dependency:
+
+```swift
+.package(
+  url: "https://github.com/KalebCooper/swift-federal-register.git", branch: "main",
+  traits: ["HTTPPortable"])
+```
+
+Then add `SwiftFederalRegisterDocuments`, or only `SwiftFederalRegisterDocumentsModels`, to your
+target's dependencies. See [CONTRIBUTING.md](CONTRIBUTING.md) to build and test the package locally.
 
 ## License
 
-MIT. See [LICENSE](LICENSE). The package license does not grant rights to upstream content. Recorded
-responses carry separate [source attribution and receipts](Sources/SwiftFederalRegisterDocumentsTestSupport/Fixtures/README.md).
+MIT. See [LICENSE](LICENSE). This project is independent of the Office of the Federal Register. The
+package license does not grant rights to Federal Register content; the recorded test responses carry
+their own [source attribution](Sources/SwiftFederalRegisterDocumentsTestSupport/Fixtures/README.md).

@@ -1,21 +1,92 @@
-# Contributing
+# Contributing to swift-federal-register
 
-Run `bash Scripts/verify.sh` before each commit and `bash Scripts/verify.sh --self-test` after editing
-verification scripts. The source gate rejects missing modules; the retained historical scaffold mode is
-not applicable once real sources exist. Run strict formatting over Sources, Tests, and Examples.
+Contributions are welcome. Open an issue to discuss an addition before investing in a large pull
+request.
 
-Implement complete service slices with portable models/endpoints, the independent client, recorded
-fixtures, Swift Testing suites, consumer examples, DocC, README, and changelog changes. Preserve unknown
-values, explicit nulls, identifiers, conflicting dates, and provider cursors. The public networking
-dependency floor is 1.3.1. Never synthesize a representation URL from a missing format link.
+## Getting started
 
-Use Swift 6, the manifest's shared strict settings, alphabetical declarations within logical groups, and strict formatting. Models have no networking dependencies. Tests use recorded provider data rather than live requests. Use Xcode MCP tools for Apple project operations and generated package schemes.
+1. Fork and clone the repository.
+2. Open the package directory in Xcode 26 or later.
+3. Build and test with Xcode's generated `swift-federal-register-Package` scheme (⌘U), or run
+   `swift test`.
 
-Run `bash Scripts/linux-test.sh` for both Linux configurations and `bash Scripts/linux-demo.sh` for the
-offline consumer. Build both catalogs models-first at zero warnings. `Scripts/build-docs.sh` consumes
-Apple modules; `Scripts/linux-docs.sh` consumes the tested Linux modules and records Linux-only evidence.
+## Before you open a pull request
 
-Before publishing, complete the Apple, Android, documentation, and demo gates listed in
-[implementation readiness](IMPLEMENTATION_READINESS.md). CI activation awaits those gates. Timeouts
-remain provisional until measured green runs exist. Use focused Conventional Commits; publishing requires
-owner authorization.
+Run these from the package directory. Each must pass.
+
+| Check | Command |
+|---|---|
+| Tests | the `swift-federal-register-Package` scheme in Xcode, or `swift test` |
+| Format | `swift format lint --strict --recursive Sources Tests`, with zero findings |
+| Repository invariants | `bash Scripts/verify.sh`, which also runs the format lint |
+| Linux, trait on and off | `bash Scripts/linux-test.sh` (needs Docker) |
+| Offline demo on Linux | `bash Scripts/linux-demo.sh` (needs Docker) |
+
+`swift format --in-place --recursive Sources Tests` fixes most format findings. After changing
+`Scripts/verify.sh` or `Scripts/verify-source.sh`, `bash Scripts/verify.sh --self-test` proves each
+check still trips on a planted violation, and a new check ships with one.
+
+Target `main`, keep one concern per pull request, and record any change to the public surface under
+**Unreleased** in `CHANGELOG.md`.
+
+## Guidelines
+
+- **Layers:** `SwiftFederalRegisterDocumentsModels` depends on nothing. It never imports
+  swifty-networking, `URLSession`, or any transport type; if a type needs one to exist, it belongs
+  in `SwiftFederalRegisterDocuments`. The SDK adds behavior, never models.
+- **Three levels:** a new operation is an everyday `FederalRegisterClient` method, an equivalent
+  `DocumentRequest` factory, and the `Endpoint` values it sends, sharing one executor.
+- **Provider data:** keep what the service sends. Unknown fields and codes, explicit nulls,
+  identifiers, and conflicting dates are preserved. Nothing is converted, sorted, filtered, or given
+  a fallback the service does not promise, and a missing representation link is never replaced with
+  a guessed one.
+- **Portability:** `SwiftFederalRegisterDocumentsModels` imports Foundation only as the fallback to
+  `FoundationEssentials`. Darwin-only code sits inside `#if canImport(Darwin)`, and code that uses
+  the portable transport sits inside `#if HTTPPortable`.
+- **Concurrency:** no actors on the client; shared state is `Mutex` or `Atomic`. Errors are typed and
+  mapped at each layer. Time comes from an injected source, such as the client's `retrievalTime`;
+  never sleep or read the wall clock.
+- **Tests:** Swift Testing only, and never against the live API. Record a response once into
+  `Sources/SwiftFederalRegisterDocumentsTestSupport/Fixtures/` with the User-Agent
+  `(swift-federal-register, https://github.com/KalebCooper/swift-federal-register)`, add its entry
+  to `receipts.json`, and add a `Fixture` case naming the path and query you recorded. Every `@Suite`
+  carries `.timeLimit(.minutes(suiteTimeLimitMinutes))`, so a test that stops making progress fails
+  its suite instead of holding the run open.
+- **Agency catalog:** `AgencyIdentifier+Catalog.swift` is generated from the recorded
+  `agencies.json` by `Scripts/generate-agency-identifiers.py`. Edit the generator, never the output;
+  `Scripts/verify.sh` fails when the two drift apart.
+- **Style:** declarations are ordered alphabetically within their groupings unless an inline comment
+  says why not. No force unwraps, `try!`, or `as!` in `Sources/`.
+- **Scope:** no macros, no interceptor or middleware pipelines, no speculative API.
+
+## Documentation
+
+Every public symbol needs a DocC comment: a one-sentence summary, what it does and does not
+guarantee, and the specific error cases it throws. A new feature updates the matching DocC catalog
+in each product, the README, and the changelog in the same pull request.
+
+To build the documentation site locally, build `SwiftFederalRegisterDocuments` for an iOS simulator,
+then run `bash Scripts/build-docs.sh /path/to/Debug-iphonesimulator /tmp/swift-federal-register-docs`
+with a new output directory. It builds `SwiftFederalRegisterDocumentsModels` first and
+`SwiftFederalRegisterDocuments` against it with warnings treated as errors, and writes the static
+site to the output directory's `site` folder. On Linux, after `Scripts/linux-test.sh`,
+`bash Scripts/linux-docs.sh <new-directory-inside-the-repository>` builds both catalogs from the
+tested modules instead.
+
+## Continuous integration
+
+CI runs the tests on Linux (trait on, then the default trait set), an Android emulator, and an iOS
+simulator, lints the format, runs the repository invariants, builds the demo in Release
+configuration, and builds the documentation on pull requests. The documentation site publishes only
+from `main`.
+
+## Releases
+
+Before tagging a release, run every check above, build the documentation with `Scripts/build-docs.sh`,
+and build and run the demo with the package closed in Xcode. Tag only after every CI lane passes on
+the release commit; a local pass does not establish hosted or Android success.
+
+## Reporting issues
+
+Include the method or endpoint you called, what you expected, what happened, and a minimal
+reproduction where possible. If the service answered with an error body, include it.
