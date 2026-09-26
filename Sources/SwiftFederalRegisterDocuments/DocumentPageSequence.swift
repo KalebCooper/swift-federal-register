@@ -16,7 +16,7 @@ public struct DocumentPageSequence<Value: Sendable>: AsyncSequence, Sendable {
   /// Every failure is a typed service error.
   public typealias Failure = FederalRegisterError
 
-  /// One independent cursor traversal.
+  /// One independent traversal over the provider's cursor or page-number links.
   public struct Iterator: AsyncIteratorProtocol {
     /// The selected page or receipt view.
     public typealias Element = Value
@@ -71,7 +71,7 @@ public struct DocumentPageSequence<Value: Sendable>: AsyncSequence, Sendable {
             after: endpoint, seenCursors: seenCursors)
           {
             endpoint = following.endpoint
-            seenCursors.insert(following.cursor)
+            if let cursor = following.cursor { seenCursors.insert(cursor) }
             finished = false
           }
         } catch { throw .pagination(error) }

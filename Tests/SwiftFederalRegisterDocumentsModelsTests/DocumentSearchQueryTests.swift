@@ -473,11 +473,12 @@ struct DocumentSearchQueryTests {
     let first = try #require(
       Endpoint<DocumentPage>(link: base + fields.map { "&fields%5B%5D=" + $0 }.joined()))
     let second = try #require(try pageOne.continuation(after: first, seenCursors: []))
-    #expect(second.cursor == "WzE3MzU1MTY4MDAwMDAsIjIwMjQtMzA3NDciXQ")
+    let secondCursor = try #require(second.cursor)
+    #expect(secondCursor == "WzE3MzU1MTY4MDAwMDAsIjIwMjQtMzA3NDciXQ")
     #expect(
       "https://www.federalregister.gov" + second.endpoint.path == pageOne.nextPageURL)
     let third = try #require(
-      try pageTwo.continuation(after: second.endpoint, seenCursors: [second.cursor]))
+      try pageTwo.continuation(after: second.endpoint, seenCursors: [secondCursor]))
     #expect(third.cursor == "WzE3MzU1MTY4MDAwMDAsIjIwMjQtMzA3MzQiXQ")
     #expect("https://www.federalregister.gov" + third.endpoint.path == pageTwo.nextPageURL)
     let fewer = try #require(
@@ -534,6 +535,7 @@ struct DocumentSearchQueryTests {
       "https://www.federalregister.gov/api/v1/documents/2024-31396.json?search_after_cursor=x",
       "https://www.federalregister.gov/documents/full_text/text/2024/12/31/2024-31396.txt?search_after_cursor=x",
       "https://example.gov/api/v1/documents?order=newest&per_page=20&search_after_cursor=x",
+      "https://example.gov/api/v1/documents?order=newest&per_page=20&page=2",
       "https://user:secret@www.federalregister.gov/api/v1/documents?order=newest&per_page=20&search_after_cursor=x",
       "https://www.federalregister.gov/api/v1/documents?order=newest&per_page=20&search_after_cursor=x#top",
       "http://www.federalregister.gov/api/v1/documents?order=newest&per_page=20&search_after_cursor=x",
@@ -578,14 +580,95 @@ struct DocumentSearchQueryTests {
       let first = Endpoint<DocumentPage>.searchDocuments(matching: try search.query())
       let second = try #require(
         try DocumentPage.decode(one.data()).continuation(after: first, seenCursors: []))
+      let secondCursor = try #require(second.cursor)
       #expect(second.endpoint.path == paths[0])
-      #expect(second.cursor == cursors[0])
+      #expect(secondCursor == cursors[0])
       let third = try #require(
         try DocumentPage.decode(two.data()).continuation(
-          after: second.endpoint, seenCursors: [second.cursor]))
+          after: second.endpoint, seenCursors: [secondCursor]))
       #expect(third.endpoint.path == paths[1])
       #expect(third.cursor == cursors[1])
     }
+  }
+
+  @Test("Term searches continue by the provider's page number without a cursor")
+  func termSearchesContinueByTheProvidersPageNumberWithoutACursor() throws {
+    let spaced = try DocumentSearchQuery(
+      pageSize: 2, publicationDate: .range(from: "2024-01-01", through: "2024-12-31"),
+      term: "clean water")
+    let shared =
+      "/api/v1/documents?conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
+      + "&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D="
+    let second = try #require(
+      try DocumentPage.decode(Fixture.searchSpacedTermPageOne.data()).continuation(
+        after: .searchDocuments(matching: spaced), seenCursors: []))
+    #expect(second.cursor == nil)
+    #expect(
+      second.endpoint.path == shared + "clean+water&format=json&order=newest&page=2&per_page=2")
+    // Synthetic: the recorded page-two link advanced to page three; no third page was captured.
+    let third = try #require(
+      try page(
+        next: "https://www.federalregister.gov" + shared
+          + "clean+water&format=json&order=newest&page=3&per_page=2"
+      ).continuation(after: second.endpoint, seenCursors: []))
+    #expect(third.cursor == nil)
+    #expect(
+      third.endpoint.path == shared + "clean+water&format=json&order=newest&page=3&per_page=2")
+    // Receipt URL of Fixtures/search-relevance-page-one.json; relevance order is not a query option.
+    let relevance = try #require(
+      Endpoint<DocumentPage>(
+        link: "https://www.federalregister.gov/api/v1/documents.json?order=relevance&per_page=2"
+          + "&conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
+          + "&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D=water"))
+    let relevanceTwo = try #require(
+      try DocumentPage.decode(Fixture.searchRelevancePageOne.data()).continuation(
+        after: relevance, seenCursors: []))
+    #expect(relevanceTwo.cursor == nil)
+    #expect(
+      relevanceTwo.endpoint.path
+        == shared + "water&format=json&order=relevance&page=2&per_page=2")
+  }
+
+  @Test("Page-number continuations must advance the page and keep the query")
+  func pageNumberContinuationsMustAdvanceThePageAndKeepTheQuery() throws {
+    // Synthetic links in the shape of the recorded clean-water page-two link.
+    let spaced = try DocumentSearchQuery(
+      pageSize: 2, publicationDate: .range(from: "2024-01-01", through: "2024-12-31"),
+      term: "clean water")
+    let first = Endpoint<DocumentPage>.searchDocuments(matching: spaced)
+    let root =
+      "https://www.federalregister.gov/api/v1/documents?conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
+      + "&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D="
+    let link: (String) -> String = { root + "clean+water&format=json&order=newest" + $0 }
+    let second = try #require(Endpoint<DocumentPage>(link: link("&page=2&per_page=2")))
+    #expect(throws: DocumentPaginationError.nonprogressingPage(1)) {
+      try page(next: link("&page=1&per_page=2")).continuation(after: first, seenCursors: [])
+    }
+    #expect(throws: DocumentPaginationError.nonprogressingPage(0)) {
+      try page(next: link("&page=0&per_page=2")).continuation(after: first, seenCursors: [])
+    }
+    #expect(throws: DocumentPaginationError.nonprogressingPage(2)) {
+      try page(next: link("&page=2&per_page=2")).continuation(after: second, seenCursors: [])
+    }
+    #expect(throws: DocumentPaginationError.nonprogressingPage(1)) {
+      try page(next: link("&page=1&per_page=2")).continuation(after: second, seenCursors: [])
+    }
+    for tail in ["", "&page=", "&page=two", "&page=2&page=3"] {
+      #expect(throws: DocumentPaginationError.missingCursor) {
+        try page(next: link(tail + "&per_page=2")).continuation(after: first, seenCursors: [])
+      }
+    }
+    #expect(throws: DocumentPaginationError.changedQuery) {
+      try page(next: link("&page=2&per_page=20")).continuation(after: first, seenCursors: [])
+    }
+    #expect(throws: DocumentPaginationError.changedQuery) {
+      try page(next: root + "clean+air&format=json&order=newest&page=2&per_page=2").continuation(
+        after: first, seenCursors: [])
+    }
+    // A cursor link continues by its cursor whatever page it names.
+    #expect(
+      try page(next: link("&page=1&per_page=2&search_after_cursor=abc")).continuation(
+        after: second, seenCursors: [])?.cursor == "abc")
   }
 
   /// Names each resolution; the switch compiles only while it covers every case.

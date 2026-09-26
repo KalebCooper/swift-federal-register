@@ -46,7 +46,16 @@ All notable changes will be documented here, following Keep a Changelog and Sema
   for general searches. Query values are percent-encoded outside the RFC 3986 unreserved characters, so
   a term containing `+`, `&`, `=`, or `%` reaches the provider as given. The request resolves to the new
   `DocumentRequest.Resolution.documentSearch` case, whose sequence follows validated cursor links;
-  exhaustive switches over `Resolution` need that arm.
+  exhaustive switches over `Resolution` need that arm. Page continuations compare queries as the
+  provider parses them, reading `+` as a space, so a published `clean+water` matches a sent
+  `clean%20water`.
+- Page-number continuation. Term searches publish next links with a page number and no cursor, so
+  `DocumentPage.continuation(after:seenCursors:)` also accepts a validated link whose single integer
+  `page` exceeds the current endpoint's page (absent meaning 1) with every other query item unchanged;
+  its returned `cursor` is now `String?`, nil for a page-number link. A same-or-lower page fails with
+  the new `DocumentPaginationError.nonprogressingPage`, and a link with neither a cursor nor a page
+  fails with `missingCursor`. No page is computed locally, and pages beyond the provider's depth cap
+  are not guaranteed.
 - Zero-match search pages decode: `DocumentPage.totalPages` is optional, nil when the provider omits
   `total_pages`, and an absent `results` beside a zero `count` is an empty page. Absent results with a
   nonzero count, or a null `results`, remain a decoding error.
@@ -60,6 +69,4 @@ All notable changes will be documented here, following Keep a Changelog and Sema
 
 ### Fixed
 
-- Page continuations compare queries as the provider parses them, reading `+` as a space, so a
-  published `clean+water` matches a sent `clean%20water`.
 - Removed force unwraps from custom request test factories rejected by the CI formatter.

@@ -26,10 +26,13 @@ The [official API contract](https://www.federalregister.gov/api/v1/documentation
 1994 and page sizes of 1 through 1000, defaulting to 20. Queries impose no product-era cutoff. Actual
 source holdings determine availability. Newest and oldest chronological order are supported here.
 
-Cursor links are verified from recorded responses. They remain opaque and retain source query parameters.
-`total_pages` can be capped at 50 while `next_page_url` continues, so it never controls traversal.
-An absent or null next link ends traversal. An advertised next link with no cursor, changed filters,
-unsafe origin/path, or repeated cursor fails explicitly. These checks do not promise a stable snapshot.
+Next links are verified from recorded responses. Cursors remain opaque, and every link retains its
+source query parameters. `total_pages` can be capped at 50 while `next_page_url` continues, so it never
+controls traversal, and pages beyond the provider's depth cap are not guaranteed. An absent or null next
+link ends traversal, as does a zero-match page. A next link continues by a cursor or, as recorded term
+searches publish, by a strictly increasing page number; a link with neither, changed filters, an unsafe
+origin/path, a repeated cursor, or a nonprogressing page fails explicitly. These checks do not promise a
+stable snapshot.
 
 OFR/NARA and GPO publish the source. FederalRegister.gov's renditions are informational; GPO publishes
 the official edition. An advertised format link can fail: the recorded 1994 HTML link returned 404,
