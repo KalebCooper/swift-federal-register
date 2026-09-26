@@ -118,6 +118,7 @@ def formatted(source, configuration):
             ["swift", "format", "--configuration", str(configuration), str(path)],
             capture_output=True,
             text=True,
+            encoding="utf-8",
             check=False,
         )
     except FileNotFoundError as error:
@@ -137,7 +138,7 @@ def generate(input_path, names_path, configuration):
         raise CatalogError("snapshot must be a nonempty JSON array of agencies")
     names = {}
     if names_path is not None:
-        names = json.loads(names_path.read_text())
+        names = json.loads(names_path.read_text(encoding="utf-8"))
         if not isinstance(names, dict) or not all(
             isinstance(key, str) and isinstance(value, str) for key, value in names.items()
         ):
@@ -168,7 +169,9 @@ def main(argv=None):
         print(f"generate-agency-identifiers: {error}", file=sys.stderr)
         return 1
     if arguments.check:
-        current = arguments.output.read_text() if arguments.output.exists() else None
+        current = (
+            arguments.output.read_text(encoding="utf-8") if arguments.output.exists() else None
+        )
         if current != source:
             print(
                 f"generate-agency-identifiers: {arguments.output} drifts from {arguments.input}",
@@ -177,7 +180,7 @@ def main(argv=None):
             return 1
         print(f"{count} agency identifiers match {arguments.output}")
         return 0
-    arguments.output.write_text(source)
+    arguments.output.write_text(source, encoding="utf-8")
     print(f"{count} agency identifiers written to {arguments.output}")
     return 0
 
