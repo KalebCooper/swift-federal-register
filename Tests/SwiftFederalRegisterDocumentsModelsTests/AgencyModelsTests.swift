@@ -32,6 +32,27 @@ struct AgencyModelsTests {
       agency.url == "https://www.federalregister.gov/agencies/environmental-protection-agency")
   }
 
+  @Test("A document continuation never crosses into the agency routes")
+  func aDocumentContinuationNeverCrossesIntoTheAgencyRoutes() throws {
+    // Synthetic literal: no capture publishes a next link outside the documents routes.
+    for link in [
+      "https://www.federalregister.gov/api/v1/agencies.json?search_after_cursor=x",
+      "https://www.federalregister.gov/api/v1/agencies/environmental-protection-agency.json?search_after_cursor=x",
+    ] {
+      let data = Data(
+        """
+        {"count":1,"next_page_url":"\(link)","results":[{"document_number":"2024-31396",
+         "title":"Example"}],"total_pages":1}
+        """.utf8)
+      let page = try DocumentPage.decode(data)
+      #expect(Endpoint<DocumentPage>(link: link) != nil)
+      #expect(throws: DocumentPaginationError.invalidLink(link)) {
+        try page.continuation(
+          after: .presidentialDocuments(matching: DocumentQuery()), seenCursors: [])
+      }
+    }
+  }
+
   @Test("A search result's child agency attribution names its parent")
   func aSearchResultsChildAgencyAttributionNamesItsParent() throws {
     let page = try JSONDecoder().decode(
@@ -41,6 +62,53 @@ struct AgencyModelsTests {
       agencies.map(\.rawName) == ["DEPARTMENT OF ENERGY", "Federal Energy Regulatory Commission"])
     #expect(agencies.map(\.parentID) == [nil, 136])
     #expect(agencies.map(\.slug) == [.energyDepartment, .federalEnergyRegulatoryCommission])
+  }
+
+  @Test("Agency endpoints and requests describe the catalog and detail routes")
+  func agencyEndpointsAndRequestsDescribeTheCatalogAndDetailRoutes() throws {
+    let catalog = Endpoint<AgencyList>.agencies()
+    #expect(catalog.accept == "application/json")
+    #expect(catalog.path == "/api/v1/agencies.json")
+    let epa = try Endpoint<FederalRegisterAgency>.agency(.environmentalProtectionAgency)
+    #expect(epa.path == "/api/v1/agencies/environmental-protection-agency.json")
+    let future = try Endpoint<FederalRegisterAgency>.agency(
+      AgencyIdentifier(rawValue: "future-agency"))
+    #expect(future.path == "/api/v1/agencies/future-agency.json")
+    #expect(DocumentRequest.agencies().resolution == .endpoint(catalog))
+    #expect(DocumentRequest.agencies().endpoint == catalog)
+    #expect(try DocumentRequest.agency(.environmentalProtectionAgency).resolution == .endpoint(epa))
+    #expect(
+      try DocumentRequest.agency(AgencyIdentifier(rawValue: "future-agency")).endpoint == future)
+  }
+
+  @Test(
+    "Agency slugs outside letters, digits, and hyphens are rejected before any path forms",
+    arguments: ["", "a/b", "a b", "../x", "a%2Fb"])
+  func agencySlugsOutsideLettersDigitsAndHyphensAreRejectedBeforeAnyPathForms(_ slug: String) {
+    #expect(throws: DocumentValidationError.invalidAgencyIdentifier(slug)) {
+      try Endpoint<FederalRegisterAgency>.agency(AgencyIdentifier(rawValue: slug))
+    }
+    #expect(throws: DocumentValidationError.invalidAgencyIdentifier(slug)) {
+      try DocumentRequest.agency(AgencyIdentifier(rawValue: slug))
+    }
+  }
+
+  @Test("Agency requests support contextual, inferred, and consumer-defined shapes")
+  func agencyRequestsSupportContextualInferredAndConsumerDefinedShapes() throws {
+    let contextual: DocumentRequest<AgencyList> = .agencies()
+    let inferred = DocumentRequest.agencies()
+    #expect(contextual == inferred)
+    let stored = try DocumentRequest.agency(.environmentalProtectionAgency)
+    let contextualEndpoint: Endpoint<FederalRegisterAgency> = try .agency(
+      .environmentalProtectionAgency)
+    #expect(stored.endpoint == contextualEndpoint)
+    #expect(try DocumentRequest.environmentalProtectionAgency() == stored)
+    let custom = try #require(
+      Endpoint<AgencyName>(path: "/api/v1/agencies/environmental-protection-agency.json"))
+    let customRequest = DocumentRequest(endpoint: custom)
+    #expect(customRequest.resolution == .endpoint(custom))
+    #expect(
+      try AgencyName.decode(Fixture.agencyEPA.data()).name == "Environmental Protection Agency")
   }
 
   @Test("An agency list re-encodes as a bare array and decodes back equal")
@@ -89,6 +157,36 @@ struct AgencyModelsTests {
     #expect(agency.fields["parent_id"] == .number(Decimal(string: "145.5") ?? 0))
     #expect(agency.slug == nil)
     #expect(agency.fields["slug"] == .number(7))
+  }
+
+  @Test(
+    "Custom agency paths accept only the catalog and one-segment detail routes",
+    arguments: [
+      ("/api/v1/agencies.json", true),
+      ("/api/v1/agencies/environmental-protection-agency.json", true),
+      ("/api/v1/agencies/145", true),
+      ("/api/v1/agencies", false),
+      ("/api/v1/agencies/", false),
+      ("/api/v1/agencie.json", false),
+      ("/api/v1/agencies.json/extra", false),
+      ("/api/v1/agencies/../documents.json", false),
+      ("/api/v1/agencies/%2e%2e/documents.json", false),
+      ("/api/v1/agencies/a/b.json", false),
+      ("/api/v1/agencies/a%2Fb.json", false),
+    ])
+  func customAgencyPathsAcceptOnlyTheCatalogAndOneSegmentDetailRoutes(
+    _ path: String, _ accepted: Bool
+  ) {
+    #expect((Endpoint<AgencyList>(path: path) != nil) == accepted)
+    #expect((Endpoint<FederalRegisterAgency>(path: path) != nil) == accepted)
+  }
+
+  @Test("Presidential request literals are unchanged by the agency routes")
+  func presidentialRequestLiteralsAreUnchangedByTheAgencyRoutes() throws {
+    // Literal from the presidential-page-one.json receipt URL in Fixtures/receipts.json.
+    #expect(
+      Endpoint<DocumentPage>.presidentialDocuments(matching: try DocumentQuery(pageSize: 2)).path
+        == "/api/v1/documents.json?conditions%5Btype%5D%5B%5D=PRESDOCU&order=newest&per_page=2")
   }
 
   @Test("The agency catalog decodes every entry in provider order")
@@ -179,5 +277,15 @@ struct AgencyModelsTests {
     ]
     #expect(hhs.childSlugs?.map(\.rawValue) == expectedSlugs)
     #expect(hhs.childSlugs?.first == .agencyForHealthcareResearchAndQuality)
+  }
+}
+
+/// A consumer-defined single-field agency response.
+private struct AgencyName: Decodable, DocumentResponse { let name: String }
+
+extension DocumentRequest where Response == FederalRegisterAgency {
+  /// A consumer-defined named factory over the library's detail request.
+  static func environmentalProtectionAgency() throws(DocumentValidationError) -> Self {
+    try .agency(.environmentalProtectionAgency)
   }
 }

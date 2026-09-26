@@ -29,7 +29,10 @@ public struct Endpoint<Response>: Hashable, Sendable {
       path: parts.percentEncodedPath + (parts.percentEncodedQuery.map { "?" + $0 } ?? ""))
   }
 
-  /// Creates a custom typed endpoint in the document API or full-text routes.
+  /// Creates a custom typed endpoint in the document, agency, or full-text routes.
+  ///
+  /// Agency routes are the catalog, `/api/v1/agencies.json`, and a detail path with exactly one
+  /// segment after `/api/v1/agencies/`.
   /// - Parameters:
   ///   - accept: A nonempty media type without control characters.
   ///   - path: A root-relative path with no authority, fragments, dot segments, or encoded separators.
@@ -51,6 +54,9 @@ public struct Endpoint<Response>: Hashable, Sendable {
       decoded == parts.percentEncodedPath,
       decoded == "/api/v1/documents" || decoded == "/api/v1/documents.json"
         || decoded.hasPrefix("/api/v1/documents/") || decoded.hasPrefix("/documents/full_text/")
+        || decoded == "/api/v1/agencies.json"
+        || (decoded.hasPrefix("/api/v1/agencies/")
+          && !decoded.dropFirst("/api/v1/agencies/".count).contains("/"))
     else { return nil }
     self.accept = accept
     self.path = path
@@ -62,6 +68,41 @@ public struct Endpoint<Response>: Hashable, Sendable {
     }
     return endpoint
   }
+
+  /// Whether a provider identifier can form one path segment: nonempty ASCII letters, digits, and hyphens.
+  static func isPathSegment(_ value: String) -> Bool {
+    !value.isEmpty
+      && value.utf8.allSatisfy {
+        (48...57).contains($0) || (65...90).contains($0) || (97...122).contains($0) || $0 == 45
+      }
+  }
+}
+
+extension Endpoint where Response == AgencyList {
+  /// Describes the complete agency catalog lookup.
+  ///
+  /// The provider answers with every agency in one response; there is no continuation.
+  /// - Returns: The independent catalog endpoint.
+  public static func agencies() -> Self {
+    builtIn(path: "/api/v1/agencies.json")
+  }
+}
+
+extension Endpoint where Response == FederalRegisterAgency {
+  /// Describes an agency detail lookup by slug.
+  ///
+  /// Any slug is accepted, including one the generated catalog does not name; the provider decides
+  /// whether it exists.
+  /// - Parameter identifier: A slug containing only ASCII letters, digits, and hyphens.
+  /// - Returns: The independent detail endpoint.
+  /// - Throws: `DocumentValidationError.invalidAgencyIdentifier` for an empty slug or one with any other character.
+  public static func agency(_ identifier: AgencyIdentifier) throws(DocumentValidationError) -> Self
+  {
+    guard isPathSegment(identifier.rawValue) else {
+      throw .invalidAgencyIdentifier(identifier.rawValue)
+    }
+    return builtIn(path: "/api/v1/agencies/" + identifier.rawValue + ".json")
+  }
 }
 
 extension Endpoint where Response == FederalRegisterDocument {
@@ -70,11 +111,7 @@ extension Endpoint where Response == FederalRegisterDocument {
   /// - Returns: The independent detail endpoint.
   /// - Throws: `DocumentValidationError.invalidDocumentNumber` for invalid path input.
   public static func document(_ number: String) throws(DocumentValidationError) -> Self {
-    guard !number.isEmpty,
-      number.utf8.allSatisfy({
-        (48...57).contains($0) || (65...90).contains($0) || (97...122).contains($0) || $0 == 45
-      })
-    else { throw .invalidDocumentNumber(number) }
+    guard isPathSegment(number) else { throw .invalidDocumentNumber(number) }
     return builtIn(path: "/api/v1/documents/" + number + ".json")
   }
 }

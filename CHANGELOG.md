@@ -23,6 +23,11 @@ All notable changes will be documented here, following Keep a Changelog and Sema
 - `FederalRegisterAgency`, `AgencyList`, `AgencyLogo`, and `DocumentAgency` models that retain every
   source field and explicit null. Typed projections are optional and become nil, never a decoding
   failure, when a field is missing or has an unexpected JSON kind.
+- Agency catalog and detail endpoints and requests, `Endpoint<AgencyList>.agencies()`,
+  `Endpoint<FederalRegisterAgency>.agency(_:)`, and their `DocumentRequest` factories. Custom endpoint
+  paths may name `/api/v1/agencies.json` or one detail segment under `/api/v1/agencies/`; document
+  continuations still refuse agency links. `DocumentValidationError.invalidAgencyIdentifier` rejects a
+  slug outside ASCII letters, digits, and hyphens before any path forms.
 - Source verification, pinned Linux test/demo/documentation scripts, and pending Apple/Android CI lanes.
 
 ### Changed
