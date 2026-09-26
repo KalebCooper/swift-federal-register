@@ -45,10 +45,9 @@ All notable changes will be documented here, following Keep a Changelog and Sema
 - `Endpoint<DocumentPage>.searchDocuments(matching:)` and `DocumentRequest.searchDocuments(matching:)`
   for general searches. Query values are percent-encoded outside the RFC 3986 unreserved characters, so
   a term containing `+`, `&`, `=`, or `%` reaches the provider as given. The request resolves to the new
-  `DocumentRequest.Resolution.documentSearch` case, whose sequence follows validated cursor links;
-  exhaustive switches over `Resolution` need that arm. Page continuations compare queries as the
-  provider parses them, reading `+` as a space, so a published `clean+water` matches a sent
-  `clean%20water`.
+  `DocumentRequest.Resolution.documentSearch` case; exhaustive switches over `Resolution` need that arm.
+  Page continuations compare queries as the provider parses them, reading `+` as a space, so a published
+  `clean+water` matches a sent `clean%20water`.
 - Page-number continuation. Term searches publish next links with a page number and no cursor, so
   `DocumentPage.continuation(after:seenCursors:)` also accepts a validated link whose single integer
   `page` exceeds the current endpoint's page (absent meaning 1) with every other query item unchanged;
