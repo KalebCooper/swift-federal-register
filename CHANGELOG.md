@@ -31,6 +31,11 @@ All notable changes will be documented here, following Keep a Changelog and Sema
 - `FederalRegisterClient.agencies()` and `agency(_:)`, equivalent to `value(for:)` with the agency
   requests and `send(_:)` with the agency endpoints. Each sends one request with no page sequence and
   no logo or link fetching; a malformed slug fails as `FederalRegisterError.validation` before sending.
+- Regulatory metadata projections on `FederalRegisterDocument`: `action`, `agencies`, `cfrReferences`,
+  `commentURL`, `commentsCloseOn`, `docketID`, `docketIDs`, `documentType`, `regulationIDNumberInfo`,
+  `regulationIDNumbers`, `regulationsDotGovURL`, and `significant`, with the `CFRReference`,
+  `DocumentType`, `DocumentTypeCode`, and `RegulationIDNumberInfo` models. Dates stay source strings,
+  `type` is unchanged, and an unexpected JSON kind makes a projection nil while `fields` keeps the value.
 - Source verification, pinned Linux test/demo/documentation scripts, and pending Apple/Android CI lanes.
 
 ### Changed
