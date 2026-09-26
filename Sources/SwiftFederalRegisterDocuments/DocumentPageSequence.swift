@@ -100,7 +100,7 @@ public struct DocumentPageSequence<Value: Sendable>: AsyncSequence, Sendable {
   }
 
   /// Creates an independent traversal without fetching a page.
-  /// - Returns: A cursor iterator at the initial endpoint.
+  /// - Returns: An iterator at the initial endpoint, before any request is sent.
   public func makeAsyncIterator() -> Iterator {
     Iterator(
       base: base.makeAsyncIterator(), endpoint: endpoint, followsLinks: followsLinks,

@@ -68,7 +68,13 @@ public struct FederalRegisterClient: Sendable {
   }
 
   /// Creates lazy pages for a reusable request; custom endpoint requests yield one page only.
-  /// - Parameter request: A presidential query or custom single-page endpoint.
+  ///
+  /// Library-created general and presidential search requests follow the provider's validated
+  /// next links, by opaque cursor or by strictly increasing page number. A request created with
+  /// `DocumentRequest.init(endpoint:)` yields its first page only, whatever its next link says.
+  /// - Parameter request: A general search from `DocumentRequest.searchDocuments(matching:)`, a
+  ///   presidential search from `DocumentRequest.presidentialDocuments(matching:)`, or a custom
+  ///   single-page endpoint.
   /// - Returns: Independent demand-driven page traversals.
   public func documentPages(for request: DocumentRequest<DocumentPage>) -> DocumentPageSequence<
     DocumentPage
@@ -84,7 +90,10 @@ public struct FederalRegisterClient: Sendable {
   }
 
   /// Creates lazy page receipts with bytes corresponding to exactly the decoded response.
-  /// - Parameter request: The reusable initial operation.
+  ///
+  /// Continuation follows the same rules as `documentPages(for:)`.
+  /// - Parameter request: A general or presidential search request, or a custom single-page
+  ///   endpoint.
   /// - Returns: Complete receipts without a duplicate fetch or prefetch.
   public func documentResponses(for request: DocumentRequest<DocumentPage>) -> DocumentPageSequence<
     SourceResponse<DocumentPage>
@@ -102,7 +111,10 @@ public struct FederalRegisterClient: Sendable {
   }
 
   /// Creates a lazy item view of a reusable request.
-  /// - Parameter request: A presidential query or custom one-page operation.
+  ///
+  /// Continuation follows the same rules as `documentPages(for:)`.
+  /// - Parameter request: A general or presidential search request, or a custom single-page
+  ///   endpoint.
   /// - Returns: Documents in source order, preserving duplicates.
   public func documents(for request: DocumentRequest<DocumentPage>) -> DocumentSequence {
     DocumentSequence(pages: documentPages(for: request))
