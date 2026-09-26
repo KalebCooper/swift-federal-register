@@ -8,7 +8,9 @@ Portable Swift models and an SDK for Federal Register documents.
 
 Implemented locally: document detail, presidential-document searches, lazy cursor page/item sequences,
 raw response receipts, and lossless UTF-8 content from advertised HTML, text, and XML links. Models preserve
-every JSON field, explicit null, unknown code, and conflicting date assertion. There is no published release.
+every JSON field, explicit null, unknown code, and conflicting date assertion. `agencies()` retrieves the
+complete agency list and `agency(_:)` one agency's detail by slug, each in one request with no logo or link
+fetching. There is no published release.
 
 Current and 1994 fixtures are verified. Historical PDF/XML links can be null, and an advertised HTML link
 returned 404; no replacement format is inferred. Text responses can contain HTML wrappers. PDF/MODS links

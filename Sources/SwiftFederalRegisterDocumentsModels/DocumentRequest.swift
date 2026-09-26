@@ -36,6 +36,25 @@ public struct DocumentRequest<Response>: Hashable, Sendable {
 
 }
 
+extension DocumentRequest where Response == AgencyList {
+  /// Describes the complete agency catalog lookup.
+  /// - Returns: A reusable single-operation request with no continuation.
+  public static func agencies() -> Self {
+    Self(endpoint: .agencies())
+  }
+}
+
+extension DocumentRequest where Response == FederalRegisterAgency {
+  /// Describes one agency detail lookup by slug.
+  /// - Parameter identifier: The agency slug, known or not yet cataloged.
+  /// - Returns: A reusable single-operation request.
+  /// - Throws: `DocumentValidationError.invalidAgencyIdentifier` for invalid path input.
+  public static func agency(_ identifier: AgencyIdentifier) throws(DocumentValidationError) -> Self
+  {
+    Self(endpoint: try .agency(identifier))
+  }
+}
+
 extension DocumentRequest where Response == FederalRegisterDocument {
   /// Describes one document detail lookup.
   /// - Parameter number: The original provider document number.

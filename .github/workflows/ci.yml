@@ -156,6 +156,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+      # The gate runs the agency catalog generator, a Python script, and the Swift image ships no
+      # python3 interpreter. Its `swift format` comes with the image's toolchain.
+      - name: Install python3
+        run: apt-get update && apt-get install -y --no-install-recommends python3
       - name: Verify source
         run: bash Scripts/verify.sh
       - name: Validate gate self-tests
