@@ -18,6 +18,8 @@ All notable changes will be documented here, following Keep a Changelog and Sema
 - Attributed current and 1994 fixtures, deterministic Swift Testing coverage, two DocC catalogs, and
   recorded-data and iOS examples.
 - Verified swifty-networking 1.3.1 dependency floor and HTTPPortable trait forwarding.
+- `AgencyIdentifier`, an open agency slug value with a generated catalog of the 473 slugs in the
+  recorded `/api/v1/agencies.json` snapshot; unknown slugs remain representable.
 - Source verification, pinned Linux test/demo/documentation scripts, and pending Apple/Android CI lanes.
 
 ### Changed
