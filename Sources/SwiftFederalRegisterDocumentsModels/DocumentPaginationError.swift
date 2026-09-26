@@ -15,7 +15,8 @@ public enum DocumentPaginationError: Error, Hashable, Sendable {
   /// A next link supplies an empty or duplicate cursor, or carries neither a cursor nor a
   /// single integer page number.
   case missingCursor
-  /// A page-number link does not advance past the current endpoint's page.
+  /// A page-number link does not advance past the current endpoint's page, or that endpoint's
+  /// `page` is present but not a single integer.
   case nonprogressingPage(Int)
   /// A cursor has already occurred in this traversal.
   case repeatedCursor(String)
@@ -25,8 +26,10 @@ extension DocumentPage {
   /// Validates the next provider link without using the capped page total as a limit.
   ///
   /// A link continues by exactly one nonempty `search_after_cursor` or, with no cursor, by a single
-  /// integer `page` greater than the current endpoint's page, where an absent page is 1. Recorded
-  /// term searches publish page-number links; other recorded searches publish cursors. Every other
+  /// integer `page` greater than the current endpoint's page. Only an absent current `page` counts as
+  /// 1; a current `page` that is present but repeated or not an integer fails rather than counting as
+  /// 1. Recorded term searches publish page-number links; other recorded searches publish cursors.
+  /// The same rule applies to every library-created sequence, presidential included. Every other
   /// query item is compared as the provider parses it, reading `+` as a space before decoding
   /// percent escapes, so a published `clean+water` matches a sent `clean%20water`. The provider
   /// does not promise that a page-number link past its depth cap returns documents; only the links
@@ -38,8 +41,9 @@ extension DocumentPage {
   ///   link, or nil for an absent or null next link.
   /// - Throws: `DocumentPaginationError.invalidLink` for an unsafe route, origin, or format,
   ///   `invalidMetadata` for a negative count or an empty continuing page, `missingCursor` for a
-  ///   link with no usable cursor or page, `nonprogressingPage` for a same-or-lower page,
-  ///   `repeatedCursor` for a cursor already seen, and `changedQuery` for changed filters.
+  ///   link with no usable cursor or page, `nonprogressingPage` for a same-or-lower page or a current
+  ///   `page` that is present but not a single integer, `repeatedCursor` for a cursor already seen,
+  ///   and `changedQuery` for changed filters.
   public func continuation(after endpoint: Endpoint<DocumentPage>, seenCursors: Set<String>)
     throws(DocumentPaginationError) -> (endpoint: Endpoint<DocumentPage>, cursor: String?)?
   {
@@ -57,7 +61,16 @@ extension DocumentPage {
     let cursor: String?
     if cursors.isEmpty {
       guard let page = Self.pageNumber(in: items) else { throw .missingCursor }
-      guard page > Self.pageNumber(in: currentItems) ?? 1 else { throw .nonprogressingPage(page) }
+      let currentPage: Int
+      if currentItems.contains(where: { $0.name == "page" }) {
+        guard let present = Self.pageNumber(in: currentItems) else {
+          throw .nonprogressingPage(page)
+        }
+        currentPage = present
+      } else {
+        currentPage = 1
+      }
+      guard page > currentPage else { throw .nonprogressingPage(page) }
       cursor = nil
     } else {
       guard cursors.count == 1, let value = cursors.first?.value, !value.isEmpty else {

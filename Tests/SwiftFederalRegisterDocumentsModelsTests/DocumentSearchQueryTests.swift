@@ -355,8 +355,8 @@ struct DocumentSearchQueryTests {
     #expect(endpoint.accept == "application/json")
   }
 
-  @Test("A general search request resolves to its endpoint with cursor continuation")
-  func aGeneralSearchRequestResolvesToItsEndpointWithCursorContinuation() throws {
+  @Test("A general search request resolves to its endpoint with cursor or page-number continuation")
+  func aGeneralSearchRequestResolvesToItsEndpointWithCursorOrPageNumberContinuation() throws {
     let query = try DocumentSearchQuery(agencies: [.environmentalProtectionAgency])
     let stored = DocumentRequest.searchDocuments(matching: query)
     let contextual: DocumentRequest<DocumentPage> = .searchDocuments(matching: query)
@@ -375,13 +375,14 @@ struct DocumentSearchQueryTests {
           "/api/v1/documents.json?conditions%5Bagencies%5D%5B%5D=environmental-protection-agency"
           + "&conditions%5Btype%5D%5B%5D=RULE&order=newest&per_page=20"))
     #expect(rules.resolution == .documentSearch(rulesEndpoint))
-    #expect(continuationPolicy(of: stored.resolution) == "follows search cursors")
+    #expect(
+      continuationPolicy(of: stored.resolution) == "follows search cursor or page-number links")
     #expect(
       continuationPolicy(of: DocumentRequest(endpoint: endpoint).resolution) == "single page")
     #expect(
       continuationPolicy(
         of: DocumentRequest.presidentialDocuments(matching: try DocumentQuery()).resolution)
-        == "follows presidential cursors")
+        == "follows presidential cursor or page-number links")
   }
 
   @Test("A general search sends a literal plus and reserved characters percent-encoded")
@@ -653,6 +654,13 @@ struct DocumentSearchQueryTests {
     #expect(throws: DocumentPaginationError.nonprogressingPage(1)) {
       try page(next: link("&page=1&per_page=2")).continuation(after: second, seenCursors: [])
     }
+    // A current page that is present but repeated or not an integer never counts as page one.
+    for currentTail in ["&page=3&page=4&per_page=2", "&page=x&per_page=2"] {
+      let malformed = try #require(Endpoint<DocumentPage>(link: link(currentTail)))
+      #expect(throws: DocumentPaginationError.nonprogressingPage(5)) {
+        try page(next: link("&page=5&per_page=2")).continuation(after: malformed, seenCursors: [])
+      }
+    }
     for tail in ["", "&page=", "&page=two", "&page=2&page=3"] {
       #expect(throws: DocumentPaginationError.missingCursor) {
         try page(next: link(tail + "&per_page=2")).continuation(after: first, seenCursors: [])
@@ -676,9 +684,9 @@ struct DocumentSearchQueryTests {
     -> String
   {
     switch resolution {
-    case .documentSearch: "follows search cursors"
+    case .documentSearch: "follows search cursor or page-number links"
     case .endpoint: "single page"
-    case .presidentialDocuments: "follows presidential cursors"
+    case .presidentialDocuments: "follows presidential cursor or page-number links"
     }
   }
 }
