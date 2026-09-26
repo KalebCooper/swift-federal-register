@@ -50,10 +50,11 @@ struct DocumentModelsTests {
     let next = try #require(try page.continuation(after: first, seenCursors: []))
     #expect(page.count == 8582)
     #expect(page.totalPages == 50)
-    #expect(next.cursor == "WzE3OTAxMjE2MDAwMDAsIjIwMjYtMTk1NTQiXQ")
+    let cursor = try #require(next.cursor)
+    #expect(cursor == "WzE3OTAxMjE2MDAwMDAsIjIwMjYtMTk1NTQiXQ")
     #expect(next.endpoint.path.contains("page=2&per_page=2&search_after_cursor="))
-    #expect(throws: DocumentPaginationError.repeatedCursor(next.cursor)) {
-      try page.continuation(after: first, seenCursors: [next.cursor])
+    #expect(throws: DocumentPaginationError.repeatedCursor(cursor)) {
+      try page.continuation(after: first, seenCursors: [cursor])
     }
   }
 

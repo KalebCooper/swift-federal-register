@@ -12,7 +12,7 @@ import Foundation
 public struct DocumentRequest<Response>: Hashable, Sendable {
   /// A transport-free resolution containing only endpoint values and continuation policy.
   public enum Resolution: Hashable, Sendable {
-    /// A library-created general search whose sequence follows validated cursor links.
+    /// A library-created general search whose sequence follows validated cursor or page-number links.
     case documentSearch(Endpoint<Response>)
     /// One endpoint, with no automatic continuation.
     case endpoint(Endpoint<Response>)
@@ -77,11 +77,12 @@ extension DocumentRequest where Response == DocumentPage {
     Self(resolution: .presidentialDocuments(.presidentialDocuments(matching: query)))
   }
 
-  /// Describes a general document search with cursor continuation for lazy sequence execution.
+  /// Describes a general document search whose lazy sequence follows the provider's next links.
   ///
-  /// The provider publishes a term search's next link with a page number and no cursor, so a
-  /// sequence over a search with a `term` fails with `DocumentPaginationError.missingCursor`
-  /// after its first page.
+  /// The provider continues most searches by an opaque `search_after_cursor` and a term search by a
+  /// page number; a sequence follows whichever a validated next link carries. The reported
+  /// `total_pages` is capped, 50 at `per_page=2` in recorded captures, and the provider does not
+  /// promise that pages beyond its depth cap exist. Only published links are followed.
   ///
   /// ```swift
   /// let request = DocumentRequest.searchDocuments(

@@ -182,6 +182,33 @@ struct FederalRegisterClientTests {
         "search_after_cursor=WzE3OTAxMjE2MDAwMDAsIjIwMjYtMTk1NTQiXQ") == true)
   }
 
+  @Test("Page-number links continue the sequence without a cursor")
+  func pageNumberLinksContinueTheSequenceWithoutACursor() async throws {
+    // Synthetic: the recorded page-one link without its cursor; presidential captures publish one.
+    let link =
+      "https://www.federalregister.gov/api/v1/documents?conditions%5Btype%5D%5B%5D=PRESDOCU"
+      + "&format=json&order=newest&page=2&per_page=2"
+    let transport = MockTransport(results: [
+      .success(Response(body: try changedPage(.pageOne, next: link), status: .ok)),
+      .success(Response(body: try changedPage(.pageTwo, next: nil), status: .ok)),
+    ])
+    let client = FederalRegisterClient(transport: transport, userAgent: "test-app")
+    var iterator = client.documentPages(matching: try DocumentQuery(pageSize: 2))
+      .makeAsyncIterator()
+    #expect(
+      try await iterator.next()?.results.map(\.documentNumber) == ["2026-19555", "2026-19554"])
+    #expect(transport.requests.count == 1)
+    #expect(
+      try await iterator.next()?.results.map(\.documentNumber) == ["2026-19417", "2026-19416"])
+    #expect(transport.requests.count == 2)
+    #expect(
+      transport.requests[1].request.path
+        == "/api/v1/documents?conditions%5Btype%5D%5B%5D=PRESDOCU"
+        + "&format=json&order=newest&page=2&per_page=2")
+    #expect(try await iterator.next() == nil)
+    #expect(transport.requests.count == 2)
+  }
+
   @Test("Receipts and ordinary decoding perform exactly one fetch each")
   func receiptsAndOrdinaryDecodingPerformExactlyOneFetchEach() async throws {
     let transport = try transport([.historicalDocument])
