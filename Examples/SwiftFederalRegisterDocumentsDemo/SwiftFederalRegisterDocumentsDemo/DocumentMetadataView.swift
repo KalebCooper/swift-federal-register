@@ -118,6 +118,18 @@ struct DocumentMetadataView: View {
     }
   }
 
+  private func link(
+    _ title: String, _ value: String?, key: String, in document: FederalRegisterDocument
+  ) -> some View {
+    Group {
+      if let value, let url = URL(string: value) {
+        Link(title, destination: url)
+      } else {
+        LabeledContent(title, value: FieldText.describe(value, key: key, in: document.fields))
+      }
+    }
+  }
+
   private func links(_ document: FederalRegisterDocument) -> some View {
     Section {
       link("HTML page", document.htmlURL, key: "html_url", in: document)
@@ -133,18 +145,6 @@ struct DocumentMetadataView: View {
         "Published by the Office of the Federal Register (NARA) and the Government Publishing Office. "
           + "Values appear as supplied; dates are not normalized. Retained raw fields: "
           + String(document.fields.count) + ".")
-    }
-  }
-
-  private func link(
-    _ title: String, _ value: String?, key: String, in document: FederalRegisterDocument
-  ) -> some View {
-    Group {
-      if let value, let url = URL(string: value) {
-        Link(title, destination: url)
-      } else {
-        LabeledContent(title, value: FieldText.describe(value, key: key, in: document.fields))
-      }
     }
   }
 
