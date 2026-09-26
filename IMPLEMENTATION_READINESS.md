@@ -2,9 +2,18 @@
 
 Document detail, presidential search, general document search, regulatory metadata projections, and
 agency discovery are implemented. The package is not released. The local qualification below was
-collected September 26, 2026 UTC on candidate commit `c30d9a8`. Hosted CI, Android, documentation
-publication, and release have not run for this candidate; the last hosted qualification is for `22371b9`,
-before search and agencies existed. No result is inferred from an earlier commit unless the row says so.
+collected September 26, 2026 UTC on candidate commit `2432354`, superseding the prior record at `c30d9a8`.
+Hosted CI, Android, documentation publication, and release have not run for this candidate; the last
+hosted qualification is for `22371b9`, before search and agencies existed. No result is inferred from an
+earlier commit unless the row says so.
+
+Since the prior record, a document search continuation now fails closed whenever a next link's current
+page number is present but malformed (repeated, non-integer, or otherwise not exactly one integer), the
+same way an entirely absent page number already did; only a bare absent page still counts as page one.
+Raw JSON value decoding checks container shapes (array and object) ahead of scalar types, which decodes
+container-heavy responses such as the agency catalog measurably faster with no change to any decoded
+value. Documentation was corrected to state hosted test coverage precisely and to describe presidential
+continuation as cursor or page-number links rather than cursor-only.
 
 ## Evidence classes
 
@@ -55,9 +64,10 @@ recorded search without a term continues through a cursor. A zero-match search b
 `description` and `count: 0`, with no `results` or `total_pages`.
 
 All 25 shipped fixture bodies are byte-exact and have URL/query, UTC instant, status, media type, byte
-count, SHA-256, and publisher receipts. For `c30d9a8`, every digest and byte count matched its receipt
-(25 receipts, zero mismatches). The September 24 malformed-cursor probe's full query was never logged,
-so its receipt states only the evidenced `search_after_cursor=invalid` fragment.
+count, SHA-256, and publisher receipts. Every digest and byte count matched its receipt at `c30d9a8` and
+again at `2432354` (25 receipts, zero mismatches each time; no fixture changed between the two). The
+September 24 malformed-cursor probe's full query was never logged, so its receipt states only the
+evidenced `search_after_cursor=invalid` fragment.
 
 ## Implemented surface
 
@@ -90,7 +100,7 @@ agency links. Relevance order is not a query option, and repeated agency and typ
 their multiplicity without a documented provider combination rule. Response limits apply after transport
 buffering. Receipts retain optional caller-supplied retrieval timestamps; no clock instant is invented.
 
-## Local qualification for `c30d9a8`
+## Local qualification for `2432354`
 
 Run September 26, 2026 UTC on macOS 27.0 with Xcode 27 and Docker. Exit statuses were read from files.
 
@@ -101,12 +111,12 @@ Run September 26, 2026 UTC on macOS 27.0 with Xcode 27 and Docker. Exit statuses
 | Strict format lint | `swift format lint --strict --recursive Sources Tests` | Exit 0; zero findings. | Source |
 | Agency catalog generator | `python3 Scripts/generate-agency-identifiers.py --check` against the recorded catalog | Exit 0; 473 identifiers match. Generator unit tests: 10 passed. | Source |
 | Fixture digests | SHA-256 and byte count of each body against `receipts.json` | 25 receipts, zero mismatches. | Source |
-| Apple package tests | Xcode MCP `RunAllTests`, scheme `swift-federal-register-Package` (from the result), iPhone 18 Pro simulator, iOS 27.0 | 293 passed, 0 failed, 0 skipped (parameterized cases counted individually). Models target 160: `AgencyIdentifierTests` 4, `AgencyModelsTests` 29, `DocumentModelsTests` 17, `DocumentSearchQueryTests` 97, `RegulatoryMetadataTests` 13. SDK target 133: `AdditionalContractTests` 7, `AgencyClientTests` 12, `DocumentSearchClientTests` 11, `DocumentSearchPaginationTests` 83, `FederalRegisterClientTests` 20. One linker warning: a macOS 27 sysroot while targeting the iOS 26 simulator deployment floor. | Local correctness |
-| Linux, HTTPPortable | `bash Scripts/linux-test.sh`, trait variable unset | Exit 0; 119 tests in 10 suites, 0.806 s. | Local correctness |
-| Linux, default traits | Same run, second pass | Exit 0; 119 tests in 10 suites, 0.826 s. Slowest test in both passes: the agency catalog round trip, 0.805 s and 0.817 s. | Local correctness |
-| Lockfile | `git diff --exit-code Package.resolved` after the Linux run, and after Xcode reopened the package | Clean. Opening the demo project pruned the lockfile; the tracked superset was restored and is byte-identical to the committed file. | Local correctness |
+| Apple package tests | Xcode MCP `RunAllTests`, scheme `swift-federal-register-Package` (from the result), iPhone 18 Pro simulator, iOS 27.0 | 293 passed, 0 failed, 0 skipped (parameterized cases counted individually). Models target 160: `AgencyIdentifierTests` 4, `AgencyModelsTests` 29, `DocumentModelsTests` 17, `DocumentSearchQueryTests` 97, `RegulatoryMetadataTests` 13. SDK target 133: `AdditionalContractTests` 7, `AgencyClientTests` 12, `DocumentSearchClientTests` 11, `DocumentSearchPaginationTests` 83, `FederalRegisterClientTests` 20. Same suite breakdown as the prior record. | Local correctness |
+| Linux, HTTPPortable | `bash Scripts/linux-test.sh`, trait variable unset | Exit 0; 119 tests in 10 suites, 0.563 s. | Local correctness |
+| Linux, default traits | Same run, second pass | Exit 0; 119 tests in 10 suites, 0.491 s. | Local correctness |
+| Lockfile | `git diff --exit-code Package.resolved` after the Linux run, and after each Xcode workspace open | Clean. Opening the package workspace and the demo project each pruned the lockfile; the tracked superset was restored and is byte-identical to the committed file each time. | Local correctness |
 | DocC, Linux symbols | `bash Scripts/linux-docs.sh` | Exit 0; models then SDK catalogs and the merged archive, zero warnings under `--warnings-as-errors`. | Platform |
-| DocC, Apple symbols | `bash Scripts/build-docs.sh` with the iOS simulator modules from the test build | Exit 0; models then SDK catalogs, merged archive, and static site, zero warnings under `--warnings-as-errors`. | Platform |
+| DocC, Apple symbols | `bash Scripts/build-docs.sh` with iOS simulator modules built fresh from this record's Apple test run | Exit 0; models then SDK catalogs, merged archive, and static site, zero warnings under `--warnings-as-errors`. | Platform |
 | Offline consumer demo | `bash Scripts/linux-demo.sh` | Exit 0; agency catalog (473), EPA detail, two search pages, regulatory detail in 5 recorded requests, then the presidential flow in 4 recorded requests, with no prefetch. | Platform |
 | iOS demo, Debug | Xcode MCP `BuildProject`, scheme `SwiftFederalRegisterDocumentsDemo`, iPhone 18 Pro | Succeeded; Debug-iphonesimulator, iPhoneSimulator27.0 SDK, zero warnings. Built with the package workspace closed. | Platform |
 | iOS demo, Release | Xcode MCP `BuildProject`, scheme `SwiftFederalRegisterDocumentsDemoRelease` | Succeeded at `c30d9a8` when that commit was made, zero warnings; not rebuilt for this record. | Platform |
@@ -115,14 +125,14 @@ Run September 26, 2026 UTC on macOS 27.0 with Xcode 27 and Docker. Exit statuses
 
 ## Hosted verification
 
-Hosted jobs have not run for `c30d9a8`; nothing has been pushed since `22371b9`. That includes the
+Hosted jobs have not run for `2432354`; nothing has been pushed since `22371b9`. That includes the
 verification lane's `python3` installation step, which runs the agency catalog drift check in CI and has
 been exercised only in a local `swift:6.3-noble` container.
 
 The last hosted qualification is for `22371b9`, which predates search, regulatory metadata, and agency
 discovery. All five jobs in its [CI run](https://github.com/KalebCooper/swift-federal-register/actions/runs/36249651383)
 and its [DocC run](https://github.com/KalebCooper/swift-federal-register/actions/runs/36249651388)
-completed successfully. It does not qualify `c30d9a8`.
+completed successfully. It does not qualify `2432354`.
 
 | Gate at `22371b9` | Result |
 | --- | --- |
