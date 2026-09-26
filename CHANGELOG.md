@@ -19,3 +19,12 @@ All notable changes will be documented here, following Keep a Changelog and Sema
   recorded-data and iOS examples.
 - Verified swifty-networking 1.3.1 dependency floor and HTTPPortable trait forwarding.
 - Source verification, pinned Linux test/demo/documentation scripts, and pending Apple/Android CI lanes.
+
+### Changed
+
+- Enabled Android, Apple, Linux, lint, source verification, and DocC builds in GitHub Actions.
+- Updated DocC builds to use the generated package scheme; Pages deployment remains disabled.
+
+### Fixed
+
+- Removed force unwraps from custom request test factories rejected by the CI formatter.

@@ -1,9 +1,9 @@
 # Implementation readiness
 
-The first document/detail and presidential-search slices are implemented locally. The package is not
-released; Apple and Android qualification remains incomplete. Validation below was performed September
-24, 2026 UTC. Implementation commit: `80c340e`. No source or build result is inferred from project
-creation or scaffold validation.
+The first document/detail and presidential-search slices are implemented. The package is not released.
+Local evidence below was collected September 24, 2026 UTC; hosted evidence was checked September 26.
+Implementation commit: `80c340e`. Demo runtime remains unverified. No source or build result is inferred
+from project creation or scaffold validation.
 
 ## Verified dependency and provider evidence
 
@@ -63,7 +63,6 @@ Receipts retain optional caller-supplied retrieval timestamps; no clock instant 
 | Apple DocC | Passed both catalogs, merged archive, and static site with warnings-as-errors against Apple-built simulator modules. |
 | Release demo | Release scheme supplied; verification unavailable while demo workspace operations time out. |
 | Android | Unavailable: no installed Swift SDK or adb on this host. Retained emulator CI pins remain unchanged. |
-| Hosted CI, remote, tag, release | Not performed; no remote is configured. |
 
 The Xcode service was not reset, and sibling workspaces were not closed. Subsequent demo build-log
 retrieval also timed out after 300 seconds, so no hidden demo compiler result is inferred. Opening the package root with
@@ -73,14 +72,37 @@ reporting no running app. Only this package workspace was closed before opening 
 package-edge, project-format, or scheme-configuration operation, so XcodeGen configured the demo's local
 dependency, Debug/Release schemes, and format 77.
 
+## Hosted verification
+
+The first enabled [CI run](https://github.com/KalebCooper/swift-federal-register/actions/runs/36248538470)
+at `7401ba7` completed on September 26. Its overall result was failure because the formatter rejected
+force unwraps in two custom request test factories. The platform jobs completed successfully.
+The [DocC run](https://github.com/KalebCooper/swift-federal-register/actions/runs/36248538439) also
+completed successfully. These hosted results supersede the earlier unavailable platform results above.
+
+After replacing the force unwraps, all five jobs in the [repair CI run](https://github.com/KalebCooper/swift-federal-register/actions/runs/36249651383)
+and the [repair DocC run](https://github.com/KalebCooper/swift-federal-register/actions/runs/36249651388)
+completed successfully at `22371b9`. The table below records this completed qualification.
+
+| Gate | Result |
+| --- | --- |
+| Android | Passed all 29 tests in three suites on the emulator with Swift 6.3.3 and HTTPPortable. |
+| Apple package tests | Passed all three Swift Testing suites on iPhone 18 Pro / iOS 27 with Xcode 27. |
+| DocC | Both catalogs, merged archive, static site, and uploaded artifact passed. Pages deployment remains disabled. |
+| Linux | Passed all 29 tests in three suites under both HTTPPortable and default traits. |
+| Release demo | Hosted simulator Release build passed. This does not establish Debug build or runtime behavior. |
+| Source verification and lint | Passed after replacing force unwraps with throwing #require accessors. Both hosted checks and all 45 source-checker self-test arms passed. Local checks also passed using the CI Swift 6.3.3 image. |
+
+GitHub origin is configured and main is pushed. No tag or release is published.
+
 ## Remaining delivery gates
 
-Recover Apple test-runner completion on the generated package scheme and finish the iOS demo build/run
-including Release. Run the Android
-emulator suite and establish Swift 6.2/iOS 26 compatibility through the retained Apple matrix. All retained
-CI/docs lanes remain disabled until qualification is complete; timeouts remain provisional.
+Finish iOS demo Debug build and runtime verification. Linux, Android, Apple, lint,
+source verification, and DocC build jobs are enabled and have completed successfully.
+GitHub Pages deployment remains disabled pending the documentation delivery decision;
+timeouts remain provisional.
 
 Use `bash Scripts/verify.sh` and `--self-test` for implementation changes. The historical scaffold validator
 is no longer an applicable source gate and is not run by the source checker self-test. No missing-subject
-protection was removed. Public repository creation, pushes, tags, releases, and hosted publication still
+protection was removed. Further pushes, tags, releases, and hosted documentation publication still
 require the owner's delivery decision.

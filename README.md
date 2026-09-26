@@ -58,8 +58,9 @@ shows historical date evidence, null formats, source text, and two cursor pages.
 `bash Scripts/linux-demo.sh` to build and execute it in the pinned Linux container.
 
 The iOS example is `Examples/SwiftFederalRegisterDocumentsDemo/SwiftFederalRegisterDocumentsDemo.xcodeproj`.
-It supports document lookup, source-content loading, and explicit next-page loading. Its Apple build and
-runtime verification remain pending. Close the standalone package workspace before opening the demo.
+It supports document lookup, source-content loading, and explicit next-page loading. Its Release simulator
+build passes in hosted CI; Debug build and runtime verification remain pending.
+Close the standalone package workspace before opening the demo.
 
 ## Products
 
@@ -71,8 +72,9 @@ runtime verification remain pending. Close the standalone package workspace befo
 ## Requirements
 
 Swift tools 6.2, Swift 6 language mode, and iOS/macOS/tvOS/visionOS/watchOS 26 floors. Linux validation uses
-Swift 6.3 in `swift:6.3-noble`, with both default traits and `HTTPPortable`. The Apple package build and Apple-symbol DocC generation pass; Apple tests, iOS demo execution, and
-Android execution remain unverified. Enable `HTTPPortable` and inject a portable transport for Linux or Android networking.
+Swift 6.3 in `swift:6.3-noble`, with both default traits and `HTTPPortable`. Hosted iOS 27 and Android
+tests, the Release simulator demo build, and Apple-symbol DocC generation pass; iOS demo execution
+remains unverified. Enable `HTTPPortable` and inject a portable transport for Linux or Android networking.
 The default Apple convenience uses URLSession; default-trait Linux consumers supply their own transport.
 
 ## Installation

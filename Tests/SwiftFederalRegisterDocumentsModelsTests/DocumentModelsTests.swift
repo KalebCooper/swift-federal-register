@@ -37,7 +37,7 @@ struct DocumentModelsTests {
     let custom = DocumentRequest<CustomResponse>.init(
       endpoint: try #require(Endpoint(path: "/api/v1/documents/93-32104.json")))
     #expect(stored.endpoint.path == "/api/v1/documents/93-32104.json")
-    #expect(custom == .historical)
+    #expect(try custom == .historical)
     #expect(
       try CustomResponse.decode(Fixture.historicalDocument.data()).document_number == "93-32104")
   }
@@ -121,6 +121,8 @@ struct DocumentModelsTests {
 private struct CustomResponse: Codable, DocumentResponse { let document_number: String }
 extension DocumentRequest where Response == CustomResponse {
   fileprivate static var historical: Self {
-    Self(endpoint: Endpoint(path: "/api/v1/documents/93-32104.json")!)
+    get throws {
+      Self(endpoint: try #require(Endpoint(path: "/api/v1/documents/93-32104.json")))
+    }
   }
 }
