@@ -77,7 +77,7 @@ dependency, Debug/Release schemes, and format 77.
 
 Recover Apple test-runner completion on the generated package scheme and finish the iOS demo build/run
 including Release. Run the Android
-emulator suite and establish Swift 6.2/iOS 26 compatibility through the retained Apple matrix. All retained
+emulator suite and qualify the retained Xcode 27 Apple lane. All retained
 CI/docs lanes remain disabled until qualification is complete; timeouts remain provisional.
 
 Use `bash Scripts/verify.sh` and `--self-test` for implementation changes. The historical scaffold validator
