@@ -89,7 +89,8 @@ are optional and supplied through `retrievalTime`; the default does not invent a
 ## Example
 
 The [offline consumer demo](Examples/OfflineDemo/README.md) runs against attributed recorded responses and
-shows historical date evidence, null formats, source text, and two cursor pages. Run
+shows agency discovery, a two-page general search, typed regulatory metadata, historical date evidence,
+null formats, source text, and two presidential cursor pages. Run
 `bash Scripts/linux-demo.sh` to build and execute it in the pinned Linux container.
 
 The iOS example is `Examples/SwiftFederalRegisterDocumentsDemo/SwiftFederalRegisterDocumentsDemo.xcodeproj`.

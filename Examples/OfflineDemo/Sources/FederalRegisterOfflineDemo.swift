@@ -12,14 +12,89 @@ struct FederalRegisterOfflineDemo {
       return
     }
     let directory = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
-    func bytes(_ name: String) throws -> Data {
-      try Data(contentsOf: directory.appendingPathComponent(name))
+    func recorded(_ name: String) throws -> Result<Response, TransportError> {
+      .success(
+        Response(body: try Data(contentsOf: directory.appendingPathComponent(name)), status: .ok))
     }
+    try await runAgencyAndSearchFlow(recorded: recorded)
+    print("")
+    try await runPresidentialFlow(recorded: recorded)
+  }
+
+  /// Agency discovery, a general search traversal, and typed regulatory metadata.
+  static func runAgencyAndSearchFlow(
+    recorded: (String) throws -> Result<Response, TransportError>
+  ) async throws {
     let transport = MockTransport(results: [
-      .success(Response(body: try bytes("historical-document.json"), status: .ok)),
-      .success(Response(body: try bytes("historical-content.txt"), status: .ok)),
-      .success(Response(body: try bytes("presidential-page-one.json"), status: .ok)),
-      .success(Response(body: try bytes("presidential-page-two.json"), status: .ok)),
+      try recorded("agencies.json"),
+      try recorded("agency-epa.json"),
+      try recorded("search-newest-page-one.json"),
+      try recorded("search-newest-page-two.json"),
+      try recorded("regulatory-document.json"),
+    ])
+    let client = FederalRegisterClient(
+      transport: transport, userAgent: "swift-federal-register-offline-demo")
+
+    let catalog = try await client.agencies()
+    let listed = catalog.agencies.first { $0.slug == .environmentalProtectionAgency }
+    print("Recorded agency catalog: \(catalog.agencies.count) agencies")
+    print(
+      "Catalog entry: \(listed?.name ?? "not supplied") (\(listed?.shortName ?? "not supplied"))")
+
+    let epa = try await client.agency(.environmentalProtectionAgency)
+    print("Agency detail: \(epa.name ?? "not supplied")")
+    print(
+      "  Slug: \(epa.slug?.rawValue ?? "not supplied"); id: \(epa.id.map(String.init) ?? "not supplied")"
+    )
+    print("  Parent id: \(epa.parentID.map(String.init) ?? "not supplied")")
+
+    let search = try DocumentSearchQuery(
+      pageSize: 2, publicationDate: .range(from: "2024-01-01", through: "2024-12-31"))
+    var pages = client.documentResponses(searching: search).makeAsyncIterator()
+    for _ in 0..<2 {
+      guard let page = try await pages.next() else { break }
+      print("Recorded search page receipt: \(page.requestURL)")
+      print(
+        "  Reported count: \(page.value.count); advertised total pages: "
+          + "\(page.value.totalPages.map(String.init) ?? "not supplied")")
+      for item in page.value.results {
+        print("  \(item.documentNumber) [\(item.type ?? "not supplied")]: \(item.title)")
+      }
+    }
+
+    let document = try await client.document("2024-31396")
+    print("Regulatory detail: \(document.documentNumber): \(document.title)")
+    print("  Type: \(document.documentType?.rawValue ?? "not supplied")")
+    let agencyNames = document.agencies?.map { $0.name ?? $0.rawName ?? "unnamed" }
+    print("  Agencies: \(listing(agencyNames, separator: "; "))")
+    let citations = document.cfrReferences?.map { reference in
+      "\(reference.title.map(String.init) ?? "?") CFR \(reference.part ?? "?")"
+    }
+    print("  CFR references: \(listing(citations))")
+    print("  Docket ids: \(listing(document.docketIDs))")
+    print("  Docket id field: \(document.docketID ?? "not supplied")")
+    print("  Regulation identifier numbers: \(listing(document.regulationIDNumbers))")
+    print("  Significant: \(document.significant.map(String.init) ?? "not supplied")")
+    print(
+      "Sent \(transport.requests.count) recorded agency and search requests; stopped without prefetching."
+    )
+  }
+
+  /// Distinguishes a value the provider did not supply from an empty list it did supply.
+  static func listing(_ values: [String]?, separator: String = ", ") -> String {
+    guard let values else { return "not supplied" }
+    return values.isEmpty ? "none (empty list)" : values.joined(separator: separator)
+  }
+
+  /// Historical presidential evidence and two lazy cursor pages.
+  static func runPresidentialFlow(
+    recorded: (String) throws -> Result<Response, TransportError>
+  ) async throws {
+    let transport = MockTransport(results: [
+      try recorded("historical-document.json"),
+      try recorded("historical-content.txt"),
+      try recorded("presidential-page-one.json"),
+      try recorded("presidential-page-two.json"),
     ])
     let client = FederalRegisterClient(
       transport: transport, userAgent: "swift-federal-register-offline-demo")
