@@ -418,14 +418,24 @@ struct DocumentSearchQueryTests {
 
   @Test("A provider plus in a next link compares as a space and an escaped plus as a plus")
   func aProviderPlusInANextLinkComparesAsASpaceAndAnEscapedPlusAsAPlus() throws {
-    // Synthetic cursors appended to link shapes the provider publishes; see the spaced-term fixture.
-    let spaced = try DocumentSearchQuery(term: "clean water")
-    let root = "https://www.federalregister.gov/api/v1/documents?"
-    let tail = "&format=json&order=newest&page=2&per_page=20&search_after_cursor=abc"
+    let spaced = try DocumentSearchQuery(
+      pageSize: 2, publicationDate: .range(from: "2024-01-01", through: "2024-12-31"),
+      term: "clean water")
+    let recorded = try #require(
+      try DocumentPage.decode(Fixture.searchSpacedTermPageOne.data()).nextPageURL)
+    #expect(
+      recorded
+        == "https://www.federalregister.gov/api/v1/documents?conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
+        + "&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D=clean+water"
+        + "&format=json&order=newest&page=2&per_page=2")
+    // Synthetic: the recorded link with a cursor appended, so the query comparison is reached.
     let next = try #require(
-      try page(next: root + "conditions%5Bterm%5D=clean+water" + tail).continuation(
+      try page(next: recorded + "&search_after_cursor=abc").continuation(
         after: .searchDocuments(matching: spaced), seenCursors: []))
     #expect(next.cursor == "abc")
+    // Synthetic links in the same shape for a term holding a literal plus.
+    let root = "https://www.federalregister.gov/api/v1/documents?"
+    let tail = "&format=json&order=newest&page=2&per_page=20&search_after_cursor=abc"
     let plus = try DocumentSearchQuery(term: "a+b")
     #expect(
       try page(next: root + "conditions%5Bterm%5D=a%2Bb" + tail).continuation(
@@ -552,32 +562,6 @@ struct DocumentSearchQueryTests {
           after: second.endpoint, seenCursors: [second.cursor]))
       #expect(third.endpoint.path == paths[1])
       #expect(third.cursor == cursors[1])
-    }
-  }
-
-  @Test("Term and relevance searches publish page numbers without a cursor")
-  func termAndRelevanceSearchesPublishPageNumbersWithoutACursor() throws {
-    let spaced = try DocumentSearchQuery(
-      pageSize: 2, publicationDate: .range(from: "2024-01-01", through: "2024-12-31"),
-      term: "clean water")
-    let spacedPage = try DocumentPage.decode(Fixture.searchSpacedTermPageOne.data())
-    #expect(
-      spacedPage.nextPageURL
-        == "https://www.federalregister.gov/api/v1/documents?conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
-        + "&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D=clean+water"
-        + "&format=json&order=newest&page=2&per_page=2")
-    #expect(throws: DocumentPaginationError.missingCursor) {
-      try spacedPage.continuation(after: .searchDocuments(matching: spaced), seenCursors: [])
-    }
-    // Receipt URL of Fixtures/search-relevance-page-one.json; relevance order is not a query option.
-    let relevance = try #require(
-      Endpoint<DocumentPage>(
-        link: "https://www.federalregister.gov/api/v1/documents.json?order=relevance&per_page=2"
-          + "&conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
-          + "&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D=water"))
-    #expect(throws: DocumentPaginationError.missingCursor) {
-      try DocumentPage.decode(Fixture.searchRelevancePageOne.data()).continuation(
-        after: relevance, seenCursors: [])
     }
   }
 

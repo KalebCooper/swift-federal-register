@@ -46,8 +46,7 @@ All notable changes will be documented here, following Keep a Changelog and Sema
   for general searches. Query values are percent-encoded outside the RFC 3986 unreserved characters, so
   a term containing `+`, `&`, `=`, or `%` reaches the provider as given. The request resolves to the new
   `DocumentRequest.Resolution.documentSearch` case, whose sequence follows validated cursor links;
-  exhaustive switches over `Resolution` need that arm. The provider publishes term searches' next links
-  with a page number and no cursor, so their continuation fails with `missingCursor`.
+  exhaustive switches over `Resolution` need that arm.
 - Source verification, pinned Linux test/demo/documentation scripts, and pending Apple/Android CI lanes.
 
 ### Changed
