@@ -50,11 +50,13 @@ All notable changes will be documented here, following Keep a Changelog and Sema
   `clean+water` matches a sent `clean%20water`.
 - Page-number continuation. Term searches publish next links with a page number and no cursor, so
   `DocumentPage.continuation(after:seenCursors:)` also accepts a validated link whose single integer
-  `page` exceeds the current endpoint's page (absent meaning 1) with every other query item unchanged;
-  its returned `cursor` is now `String?`, nil for a page-number link. A same-or-lower page fails with
-  the new `DocumentPaginationError.nonprogressingPage`, and a link with neither a cursor nor a page
-  fails with `missingCursor`. No page is computed locally, and pages beyond the provider's depth cap
-  are not guaranteed.
+  `page` exceeds the current endpoint's page with every other query item unchanged; only an absent
+  current `page` means 1, and a present current `page` must be a single integer. Its returned `cursor`
+  is now `String?`, nil for a page-number link. A same-or-lower page, or a current `page` that is
+  repeated or not an integer, fails with the new `DocumentPaginationError.nonprogressingPage`, and a
+  link with neither a cursor nor a page fails with `missingCursor`. Every library-created sequence,
+  presidential included, shares this rule. No page is computed locally, and pages beyond the
+  provider's depth cap are not guaranteed.
 - Zero-match search pages decode: `DocumentPage.totalPages` is optional, nil when the provider omits
   `total_pages`, and an absent `results` beside a zero `count` is an empty page. Absent results with a
   nonzero count, or a null `results`, remain a decoding error.

@@ -129,9 +129,11 @@ Next links are verified from recorded responses. Cursors remain opaque, and ever
 source query parameters. `total_pages` can be capped at 50 while `next_page_url` continues, so it never
 controls traversal, and pages beyond the provider's depth cap are not guaranteed. An absent or null next
 link ends traversal, as does a zero-match page. A next link continues by a cursor or, as recorded term
-searches publish, by a strictly increasing page number; a link with neither, changed filters, an unsafe
-origin/path, a repeated cursor, or a nonprogressing page fails explicitly. These checks do not promise a
-stable snapshot, freshness, or a complete result set. Search results and the agency list arrive in the
+searches publish, by a strictly increasing page number, where only an absent current `page` counts as 1
+and any present `page` must be a single integer; a link with neither, changed filters, an unsafe
+origin/path, a repeated cursor, or a nonprogressing page fails explicitly. Every library-created
+sequence, presidential included, shares this rule. These checks do not promise a stable snapshot,
+freshness, or a complete result set. Search results and the agency list arrive in the
 provider's order.
 
 OFR/NARA and GPO publish the source. FederalRegister.gov's renditions are informational; GPO publishes

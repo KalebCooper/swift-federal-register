@@ -16,7 +16,8 @@ public struct DocumentRequest<Response>: Hashable, Sendable {
     case documentSearch(Endpoint<Response>)
     /// One endpoint, with no automatic continuation.
     case endpoint(Endpoint<Response>)
-    /// A library-created presidential search whose sequence follows validated cursor links.
+    /// A library-created presidential search whose sequence follows validated cursor or page-number
+    /// links, the same rule as every library-created sequence.
     case presidentialDocuments(Endpoint<Response>)
   }
 
@@ -70,7 +71,10 @@ extension DocumentRequest where Response == FederalRegisterDocument {
 }
 
 extension DocumentRequest where Response == DocumentPage {
-  /// Describes a presidential search with cursor continuation for lazy sequence execution.
+  /// Describes a presidential search for lazy sequence execution.
+  ///
+  /// A sequence follows the validated cursor or page-number links the provider publishes, the same
+  /// rule as every library-created sequence; recorded presidential responses publish cursors.
   /// - Parameter query: Immutable validated filters.
   /// - Returns: A request whose single-value execution still retrieves only its first page.
   public static func presidentialDocuments(matching query: DocumentQuery) -> Self {
