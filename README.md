@@ -94,8 +94,12 @@ null formats, source text, and two presidential cursor pages. Run
 `bash Scripts/linux-demo.sh` to build and execute it in the pinned Linux container.
 
 The iOS example is `Examples/SwiftFederalRegisterDocumentsDemo/SwiftFederalRegisterDocumentsDemo.xcodeproj`.
-It supports document lookup, source-content loading, and explicit next-page loading. Its Release simulator
-build passes in hosted CI; Debug build and runtime verification remain pending.
+It supports general search by agency, term, and document type with explicit next-page loading and a
+cancel control, typed regulatory metadata for a selected result, agency lookup by slug, the agency
+catalog, document lookup, source-content loading, and presidential next-page loading. Its Debug and
+Release simulator builds pass locally, and search, next-page loading, regulatory metadata, agency lookup,
+an invalid-slug error, the catalog, and presidential detail were checked on an iOS 27 simulator.
+Cancelling an in-flight page has not been observed at runtime and remains unverified.
 Close the standalone package workspace before opening the demo.
 
 ## Products
