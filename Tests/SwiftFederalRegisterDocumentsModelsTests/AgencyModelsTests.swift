@@ -5,6 +5,9 @@ import Testing
 
 @Suite(.timeLimit(.minutes(suiteTimeLimitMinutes)))
 struct AgencyModelsTests {
+  /// Fixtures/agencies.json decoded once per test process; every catalog test reads this value.
+  private static let catalog = Result { try AgencyList.decode(Fixture.agencyCatalog.data()) }
+
   /// Reads the `agencies` array of a recorded document.
   private struct AttributedDocument: Decodable {
     let agencies: [DocumentAgency]
@@ -113,7 +116,7 @@ struct AgencyModelsTests {
 
   @Test("An agency list re-encodes as a bare array and decodes back equal")
   func anAgencyListReEncodesAsABareArrayAndDecodesBackEqual() throws {
-    let list = try AgencyList.decode(Fixture.agencyCatalog.data())
+    let list = try Self.catalog.get()
     let encoded = try JSONEncoder().encode(list)
     #expect(encoded.first == UInt8(ascii: "["))
     #expect(try AgencyList.decode(encoded) == list)
@@ -191,7 +194,7 @@ struct AgencyModelsTests {
 
   @Test("The agency catalog decodes every entry in provider order")
   func theAgencyCatalogDecodesEveryEntryInProviderOrder() throws {
-    let list = try AgencyList.decode(Fixture.agencyCatalog.data())
+    let list = try Self.catalog.get()
     #expect(list.agencies.count == 473)
     #expect(list.agencies.first?.slug == .action)
     #expect(
@@ -208,7 +211,7 @@ struct AgencyModelsTests {
 
   @Test("The catalog's EPA entry projects its identifiers, links, and logo")
   func theCatalogsEPAEntryProjectsItsIdentifiersLinksAndLogo() throws {
-    let list = try AgencyList.decode(Fixture.agencyCatalog.data())
+    let list = try Self.catalog.get()
     let epa = try #require(list.agencies.first { $0.slug == .environmentalProtectionAgency })
     #expect(epa.agencyURL == "http://www.epa.gov/")
     #expect(epa.childIDs == [])
