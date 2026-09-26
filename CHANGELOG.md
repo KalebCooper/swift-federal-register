@@ -23,7 +23,8 @@ All notable changes will be documented here, following Keep a Changelog and Sema
 ### Changed
 
 - Enabled Android, Apple, Linux, lint, source verification, and DocC builds in GitHub Actions.
-- Updated DocC builds to use the generated package scheme; Pages deployment remains disabled.
+- Enabled GitHub Pages documentation deployment on main pushes and manual workflow runs.
+- Updated DocC builds to use the generated package scheme.
 
 ### Fixed
 
