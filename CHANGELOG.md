@@ -28,6 +28,9 @@ All notable changes will be documented here, following Keep a Changelog and Sema
   paths may name `/api/v1/agencies.json` or one detail segment under `/api/v1/agencies/`; document
   continuations still refuse agency links. `DocumentValidationError.invalidAgencyIdentifier` rejects a
   slug outside ASCII letters, digits, and hyphens before any path forms.
+- `FederalRegisterClient.agencies()` and `agency(_:)`, equivalent to `value(for:)` with the agency
+  requests and `send(_:)` with the agency endpoints. Each sends one request with no page sequence and
+  no logo or link fetching; a malformed slug fails as `FederalRegisterError.validation` before sending.
 - Source verification, pinned Linux test/demo/documentation scripts, and pending Apple/Android CI lanes.
 
 ### Changed
