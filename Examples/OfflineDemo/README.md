@@ -1,25 +1,45 @@
-# Recorded-data demo
+# Offline demo
 
-This executable demonstrates the public SDK against attributed recorded responses without contacting
-the API. It runs two independent flows, each with its own recorded transport and request count.
+A command-line tool that runs `FederalRegisterClient` against recorded FederalRegister.gov responses,
+with no network access. It is a quick way to see what the SDK returns without writing an app.
 
-The first flow looks up the Environmental Protection Agency in the recorded agency catalog and fetches
-its agency detail, follows a newest-first general search over 2024 publication dates for two lazy
-cursor pages, then fetches regulatory document 2024-31396 and prints its typed projections: type,
-agencies, CFR references, docket identifiers, Regulation Identifier Numbers, and the significance flag.
-A value the provider did not supply prints as "not supplied", and an empty list stays distinct from it.
-The flow reports 5 recorded requests.
+## Run it
 
-The second flow prints the historical presidential date conflict, unavailable format links, original
-text representation, and two lazy presidential cursor-page receipts, and reports 4 recorded requests.
-Neither flow prefetches a third page.
-
-Run from the repository root:
+From the repository root:
 
 ```sh
 swift run --package-path Examples/OfflineDemo FederalRegisterOfflineDemo "$PWD/Sources/SwiftFederalRegisterDocumentsTestSupport/Fixtures"
 ```
 
-The separate example package depends on HTTPTesting only to supply its recorded transport. The SDK
-and models products do not depend on HTTPTesting. The source fixtures' provenance and hashes remain
-in their original `receipts.json` manifest.
+Or build and run it in the pinned Linux container:
+
+```sh
+bash Scripts/linux-demo.sh
+```
+
+## What it shows
+
+The tool runs two independent flows, each with its own recorded transport, and prints how many
+requests each one made.
+
+**Agencies, search, and regulatory metadata** (5 requests):
+
+- Finds the Environmental Protection Agency in the agency catalog and fetches its detail.
+- Walks a newest-first search of 2024 publications for two pages, lazily.
+- Fetches document 2024-31396 and prints its type, agencies, CFR references, dockets, Regulation
+  Identifier Numbers, and significance. A value the service did not supply prints as "not
+  supplied", distinct from an empty list.
+
+**A historical presidential document** (4 requests):
+
+- Prints document 93-32104's publication date beside its conflicting signing and table of contents
+  dates, its null PDF and XML links, and the size of its original text representation.
+- Walks two presidential search pages and prints each page's receipt URL and documents.
+
+Neither flow fetches a third page.
+
+## How it works
+
+The example is its own package. It depends on swifty-networking's `HTTPTesting` only to serve the
+recorded responses through a mock transport; the SDK and models products do not depend on it. Each
+recording's source URL, retrieval time, and digest are listed in the fixtures' `receipts.json`.
