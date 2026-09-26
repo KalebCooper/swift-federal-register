@@ -98,5 +98,145 @@
     "sha256": "51b4e6849d31aae19e4d493638c0825d9b6eb93752f2520fdfa4ec208f2af706",
     "status": 200,
     "url": "https://www.federalregister.gov/documents/full_text/text/1994/01/03/93-32104.txt"
+  },
+  {
+    "byteCount": 695071,
+    "file": "agencies.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:51:46.578643+00:00",
+    "sha256": "7a806d209d75ee543e6e91506e485ec6a8f42687056e14a1484c8bc9e79f5443",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/agencies.json"
+  },
+  {
+    "byteCount": 1148,
+    "file": "agency-epa.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:51:46.715414+00:00",
+    "sha256": "041fa8358e21b7e238b35d1edff06a92995c68fc8633007f7a875ffff7d14ce3",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/agencies/environmental-protection-agency.json"
+  },
+  {
+    "byteCount": 2053,
+    "file": "agency-hhs.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:51:46.916839+00:00",
+    "sha256": "fe6db98c0d049e1352b509fa9a6eec1a3a256d4f795b2fd21eb581fa507be3f4",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/agencies/health-and-human-services-department.json"
+  },
+  {
+    "byteCount": 4631,
+    "file": "regulatory-document.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:51:48.651956+00:00",
+    "sha256": "7e99845523f0153740bd626006091c115fdbf44f55d6e9cc5e6a265735a56eab",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents/2024-31396.json"
+  },
+  {
+    "byteCount": 12329,
+    "file": "rin-document.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:52:29.277995+00:00",
+    "sha256": "1b7ae9ccae73e9ef549d3c553db05df39161e7f1394d6cc4de102f13b065b0e3",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents/2024-29463.json"
+  },
+  {
+    "byteCount": 2426,
+    "file": "search-newest-page-one.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:51:47.075269+00:00",
+    "sha256": "5bb209202b2d45e4a99e509229c5cee75af14085a2d11ea5ee25c00a5bc5ae27",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents.json?order=newest&per_page=2&conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31"
+  },
+  {
+    "byteCount": 3021,
+    "file": "search-newest-page-two.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:51:47.280475+00:00",
+    "sha256": "7dc6b1b0370d9438bf2281bcff30419f3f6dcfe5fe39514e8b95f4a1d4ed3f1f",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents?conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&format=json&order=newest&page=2&per_page=2&search_after_cursor=WzE3MzU2MDMyMDAwMDAsIjIwMjQtMzE0MzkiXQ"
+  },
+  {
+    "byteCount": 4267,
+    "file": "search-oldest-page-one.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:52:29.596132+00:00",
+    "sha256": "43b2b1de13b2781fe8c2941f03481ef7ccb7ef7de260aa6e0ef08be2afd64560",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents.json?order=oldest&per_page=2&conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31"
+  },
+  {
+    "byteCount": 4798,
+    "file": "search-oldest-page-two.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:52:29.798049+00:00",
+    "sha256": "e464180a5c77da560b40dfb862300174753bbf509bfd17c6a51c131e0d17dd2b",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents?conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&format=json&order=oldest&page=2&per_page=2&search_after_cursor=WzE3MDQxNTM2MDAwMDAsIjIwMjMtMjc3ODMiXQ"
+  },
+  {
+    "byteCount": 15748,
+    "file": "search-fields-page-one.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:51:48.322734+00:00",
+    "sha256": "c3832c74390b4cab14bd760b38f648172f14a7a749f2d7f6d60b36804db47d60",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents.json?order=newest&per_page=2&conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bagencies%5D%5B%5D=environmental-protection-agency&conditions%5Btype%5D%5B%5D=RULE&fields%5B%5D=abstract&fields%5B%5D=action&fields%5B%5D=agencies&fields%5B%5D=agency_names&fields%5B%5D=amendatory_instructions&fields%5B%5D=body_html_url&fields%5B%5D=cfr_references&fields%5B%5D=cfr_topics&fields%5B%5D=citation&fields%5B%5D=comment_url&fields%5B%5D=comments_close_on&fields%5B%5D=correction_of&fields%5B%5D=corrections&fields%5B%5D=dates&fields%5B%5D=disposition_notes&fields%5B%5D=docket_id&fields%5B%5D=docket_ids&fields%5B%5D=dockets&fields%5B%5D=document_number&fields%5B%5D=effective_on&fields%5B%5D=end_page&fields%5B%5D=excerpts&fields%5B%5D=executive_order_notes&fields%5B%5D=executive_order_number&fields%5B%5D=explanation&fields%5B%5D=full_text_xml_url&fields%5B%5D=html_url&fields%5B%5D=images&fields%5B%5D=images_metadata&fields%5B%5D=json_url&fields%5B%5D=mods_url&fields%5B%5D=not_received_for_publication&fields%5B%5D=page_length&fields%5B%5D=page_views&fields%5B%5D=pdf_url&fields%5B%5D=president&fields%5B%5D=presidential_document_number&fields%5B%5D=proclamation_number&fields%5B%5D=public_inspection_pdf_url&fields%5B%5D=publication_date&fields%5B%5D=raw_text_url&fields%5B%5D=regulation_id_number_info&fields%5B%5D=regulation_id_numbers&fields%5B%5D=regulations_dot_gov_info&fields%5B%5D=regulations_dot_gov_url&fields%5B%5D=related_documents&fields%5B%5D=significant&fields%5B%5D=signing_date&fields%5B%5D=start_page&fields%5B%5D=subtype&fields%5B%5D=title&fields%5B%5D=toc_doc&fields%5B%5D=toc_subject&fields%5B%5D=topics&fields%5B%5D=type&fields%5B%5D=volume"
+  },
+  {
+    "byteCount": 15086,
+    "file": "search-fields-page-two.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:51:48.486774+00:00",
+    "sha256": "8b19358c6c2f8231529c4e5a014176e55b621f651c40cdae85106a82df49f42e",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents?conditions%5Bagencies%5D%5B%5D=environmental-protection-agency&conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Btype%5D%5B%5D=RULE&fields%5B%5D=abstract&fields%5B%5D=action&fields%5B%5D=agencies&fields%5B%5D=agency_names&fields%5B%5D=amendatory_instructions&fields%5B%5D=body_html_url&fields%5B%5D=cfr_references&fields%5B%5D=cfr_topics&fields%5B%5D=citation&fields%5B%5D=comment_url&fields%5B%5D=comments_close_on&fields%5B%5D=correction_of&fields%5B%5D=corrections&fields%5B%5D=dates&fields%5B%5D=disposition_notes&fields%5B%5D=docket_id&fields%5B%5D=docket_ids&fields%5B%5D=dockets&fields%5B%5D=document_number&fields%5B%5D=effective_on&fields%5B%5D=end_page&fields%5B%5D=excerpts&fields%5B%5D=executive_order_notes&fields%5B%5D=executive_order_number&fields%5B%5D=explanation&fields%5B%5D=full_text_xml_url&fields%5B%5D=html_url&fields%5B%5D=images&fields%5B%5D=images_metadata&fields%5B%5D=json_url&fields%5B%5D=mods_url&fields%5B%5D=not_received_for_publication&fields%5B%5D=page_length&fields%5B%5D=page_views&fields%5B%5D=pdf_url&fields%5B%5D=president&fields%5B%5D=presidential_document_number&fields%5B%5D=proclamation_number&fields%5B%5D=public_inspection_pdf_url&fields%5B%5D=publication_date&fields%5B%5D=raw_text_url&fields%5B%5D=regulation_id_number_info&fields%5B%5D=regulation_id_numbers&fields%5B%5D=regulations_dot_gov_info&fields%5B%5D=regulations_dot_gov_url&fields%5B%5D=related_documents&fields%5B%5D=significant&fields%5B%5D=signing_date&fields%5B%5D=start_page&fields%5B%5D=subtype&fields%5B%5D=title&fields%5B%5D=toc_doc&fields%5B%5D=toc_subject&fields%5B%5D=topics&fields%5B%5D=type&fields%5B%5D=volume&format=json&order=newest&page=2&per_page=2&search_after_cursor=WzE3MzU1MTY4MDAwMDAsIjIwMjQtMzA3NDciXQ"
+  },
+  {
+    "byteCount": 4661,
+    "file": "search-relevance-page-one.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:52:29.957173+00:00",
+    "sha256": "9828a390d25d427a9fa6518aea4f7dbe58c1f5ec4869e025b748744fcebc8af2",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents.json?order=relevance&per_page=2&conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D=water"
+  },
+  {
+    "byteCount": 125,
+    "file": "search-terminal.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-26T17:51:49.230432+00:00",
+    "sha256": "60d644ce336195e90c23755aa3a5187464fa1f7f174e82c31e1b094821e55d93",
+    "status": 200,
+    "url": "https://www.federalregister.gov/api/v1/documents.json?order=newest&per_page=2&conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01&conditions%5Bpublication_date%5D%5Blte%5D=2024-12-31&conditions%5Bterm%5D=codexNoMatchingDocument987654321"
+  },
+  {
+    "byteCount": 60,
+    "file": "invalid-cursor.json",
+    "mediaType": "application/json; charset=utf-8",
+    "publisher": "Office of the Federal Register, NARA; Government Publishing Office",
+    "retrievedAt": "2026-09-24T00:40:47+00:00",
+    "sha256": "394fac5839b1b44085694e30e351a9623cb4d4071c8f1bd2e60e038b853a18bc",
+    "status": 400,
+    "url": "https://www.federalregister.gov/api/v1/documents?search_after_cursor=invalid"
   }
 ]

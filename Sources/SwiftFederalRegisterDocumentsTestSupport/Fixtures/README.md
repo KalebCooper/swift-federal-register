@@ -20,3 +20,16 @@ Historical PDF/XML links are null, so neither format was requested or inferred.
 The live malformed `search_after_cursor=invalid` probe returned HTTP 400. Deterministic negative tests
 mutate recorded envelopes or use literal HTTP failures; they do not claim these mutations are official
 responses. Unit tests never call the live API.
+
+The agency catalog, both agency detail records, regulatory and RIN document detail, and the search
+variants (newest, oldest, relevance, fields-selected, and their two-page continuations) were retrieved
+from official FederalRegister.gov routes on September 26, 2026 UTC using the same User-Agent.
+`receipts.json` records each exact URL/query, retrieval instant, HTTP status, media type, byte count,
+SHA-256 digest, and publisher attribution for these captures as well. Each two-page pair's second
+capture used the first page's own `next_page_url`, including its `fields[]` selection where present.
+
+The `search_after_cursor=invalid` probe (September 24, 2026 UTC) returned HTTP 400 and is shipped as
+`invalid-cursor.json`. Its receipt's status, byte count, media type, and SHA-256 are evidenced from
+that capture; the full request query line was never logged, so the receipt and the `Fixture` doc
+comment state only the evidenced `search_after_cursor=invalid` fragment rather than an invented
+complete query.
