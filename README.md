@@ -113,8 +113,9 @@ Close the standalone package workspace before opening the demo.
 
 Swift tools 6.2, Swift 6 language mode, and iOS/macOS/tvOS/visionOS/watchOS 26 floors. Linux validation uses
 Swift 6.3 in `swift:6.3-noble`, with both default traits and `HTTPPortable`. Hosted iOS 27 and Android
-tests, the Release simulator demo build, and Apple-symbol DocC generation pass; iOS demo execution
-remains unverified. Enable `HTTPPortable` and inject a portable transport for Linux or Android networking.
+tests last passed at `22371b9`, before general search and agency discovery; this candidate has local
+qualification only (see IMPLEMENTATION_READINESS.md). Cancelling an in-flight demo page is unverified.
+Enable `HTTPPortable` and inject a portable transport for Linux or Android networking.
 The default Apple convenience uses URLSession; default-trait Linux consumers supply their own transport.
 
 ## Installation

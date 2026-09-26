@@ -22,8 +22,9 @@ mutate recorded envelopes or use literal HTTP failures; they do not claim these 
 responses. Unit tests never call the live API.
 
 The agency catalog, both agency detail records, regulatory and RIN document detail, and the search
-variants (newest, oldest, relevance, fields-selected, and their two-page continuations) were retrieved
-from official FederalRegister.gov routes on September 26, 2026 UTC using the same User-Agent.
+variants (newest, oldest, fields-selected, and their two-page continuations; relevance, one page; and
+the zero-match `search-terminal.json`) were retrieved from official FederalRegister.gov routes on
+September 26, 2026 UTC using the same User-Agent.
 `receipts.json` records each exact URL/query, retrieval instant, HTTP status, media type, byte count,
 SHA-256 digest, and publisher attribution for these captures as well. Each two-page pair's second
 capture used the first page's own `next_page_url`, including its `fields[]` selection where present.

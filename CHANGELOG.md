@@ -40,8 +40,8 @@ All notable changes will be documented here, following Keep a Changelog and Sema
   agencies, CFR title and part, docket identifier, effective and publication dates as an exact day,
   inclusive range, or year, Regulation Identifier Number, full-text term, and document types, with no
   implicit type condition. Filter strings are kept exactly as given; repeated agencies and types are
-  sent with their multiplicity. `DocumentValidationError` gains `emptyFilterValue`, `invalidCFRFilter`,
-  `invalidDateRange`, and `invalidYear`; exhaustive switches over it need those arms.
+  sent with their multiplicity. `DocumentValidationError` gains `emptyFilterValue`, `invalidAgencyIdentifier`,
+  `invalidCFRFilter`, `invalidDateRange`, and `invalidYear`; exhaustive switches over it need those arms.
 - `Endpoint<DocumentPage>.searchDocuments(matching:)` and `DocumentRequest.searchDocuments(matching:)`
   for general searches. Query values are percent-encoded outside the RFC 3986 unreserved characters, so
   a term containing `+`, `&`, `=`, or `%` reaches the provider as given. The request resolves to the new

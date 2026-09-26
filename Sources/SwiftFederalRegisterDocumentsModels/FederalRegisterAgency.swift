@@ -43,7 +43,8 @@ public struct FederalRegisterAgency: Codable, DocumentResponse, Hashable {
   public var logo: AgencyLogo? { fields["logo"]?.object.map(AgencyLogo.init(fields:)) }
   /// The provider's display name.
   public var name: String? { fields["name"]?.string }
-  /// The numeric identifier of the provider's parent agency, or nil for a top-level agency.
+  /// The numeric identifier of the provider's parent agency; nil for a top-level agency and when the
+  /// key is absent, null, or of another JSON kind.
   public var parentID: Int? { fields["parent_id"]?.int }
   /// The advertised link to the agency's recent documents, retained as published.
   public var recentArticlesURL: String? { fields["recent_articles_url"]?.string }
