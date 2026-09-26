@@ -10,7 +10,10 @@ Implemented locally: document detail, presidential-document searches, lazy curso
 raw response receipts, and lossless UTF-8 content from advertised HTML, text, and XML links. Models preserve
 every JSON field, explicit null, unknown code, and conflicting date assertion. `agencies()` retrieves the
 complete agency list and `agency(_:)` one agency's detail by slug, each in one request with no logo or link
-fetching. There is no published release.
+fetching. `searchDocuments(matching:)` retrieves the first page of a general document search built from
+`DocumentSearchQuery` filters, and `documents(searching:)`, `documentPages(searching:)`, and
+`documentResponses(searching:)` traverse it lazily, following the provider's validated cursor or page-number
+links with no prefetch. There is no published release.
 
 Current and 1994 fixtures are verified. Historical PDF/XML links can be null, and an advertised HTML link
 returned 404; no replacement format is inferred. Text responses can contain HTML wrappers. PDF/MODS links

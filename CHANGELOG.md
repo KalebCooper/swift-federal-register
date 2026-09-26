@@ -59,6 +59,12 @@ All notable changes will be documented here, following Keep a Changelog and Sema
 - Zero-match search pages decode: `DocumentPage.totalPages` is optional, nil when the provider omits
   `total_pages`, and an absent `results` beside a zero `count` is an empty page. Absent results with a
   nonzero count, or a null `results`, remain a decoding error.
+- `FederalRegisterClient.searchDocuments(matching:)`, `documents(searching:)`, `documentPages(searching:)`,
+  and `documentResponses(searching:)` for general searches, equivalent to `value(for:)` and the sequence
+  executors with `DocumentRequest.searchDocuments(matching:)` and to `send(_:)` with
+  `Endpoint<DocumentPage>.searchDocuments(matching:)`. The `searching:` label keeps `matching:` inferring the
+  presidential `DocumentQuery`. Sequences follow cursor and page-number links lazily, a zero-match search is
+  one empty page, and search results are never completed by a detail fetch.
 - Source verification, pinned Linux test/demo/documentation scripts, and pending Apple/Android CI lanes.
 
 ### Changed
