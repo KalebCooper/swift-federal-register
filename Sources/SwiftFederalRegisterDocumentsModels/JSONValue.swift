@@ -30,18 +30,21 @@ public enum JSONValue: Codable, Hashable, Sendable {
   /// Decodes one JSON value, recursively retaining objects and arrays.
   public init(from decoder: any Decoder) throws {
     let container = try decoder.singleValueContainer()
+    // Each failed attempt costs a thrown DecodingError, so the most frequent Federal Register
+    // kinds go first: strings, then objects and arrays. Bool stays ahead of Decimal, and neither
+    // kind decodes from the other, so a number never becomes a Bool.
     if container.decodeNil() {
       self = .null
-    } else if let value = try? container.decode(Bool.self) {
-      self = .bool(value)
     } else if let value = try? container.decode(String.self) {
       self = .string(value)
-    } else if let value = try? container.decode(Decimal.self) {
-      self = .number(value)
+    } else if let value = try? container.decode([String: JSONValue].self) {
+      self = .object(value)
     } else if let value = try? container.decode([JSONValue].self) {
       self = .array(value)
+    } else if let value = try? container.decode(Bool.self) {
+      self = .bool(value)
     } else {
-      self = .object(try container.decode([String: JSONValue].self))
+      self = .number(try container.decode(Decimal.self))
     }
   }
 
