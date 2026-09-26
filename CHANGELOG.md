@@ -20,6 +20,9 @@ All notable changes will be documented here, following Keep a Changelog and Sema
 - Verified swifty-networking 1.3.1 dependency floor and HTTPPortable trait forwarding.
 - `AgencyIdentifier`, an open agency slug value with a generated catalog of the 473 slugs in the
   recorded `/api/v1/agencies.json` snapshot; unknown slugs remain representable.
+- `FederalRegisterAgency`, `AgencyList`, `AgencyLogo`, and `DocumentAgency` models that retain every
+  source field and explicit null. Typed projections are optional and become nil, never a decoding
+  failure, when a field is missing or has an unexpected JSON kind.
 - Source verification, pinned Linux test/demo/documentation scripts, and pending Apple/Android CI lanes.
 
 ### Changed
