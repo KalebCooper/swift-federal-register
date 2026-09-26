@@ -43,6 +43,10 @@ while its PDF and XML fields were null. No replacement URLs are synthesized.
 - ``JSONValue``
 - ``DocumentContent``
 - ``DocumentRepresentation``
+- ``CFRReference``
+- ``DocumentType``
+- ``DocumentTypeCode``
+- ``RegulationIDNumberInfo``
 
 ### Operations
 - ``DocumentQuery``

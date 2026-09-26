@@ -37,6 +37,8 @@ public struct DocumentAgency: Codable, Hashable, Sendable {
   /// The informational FederalRegister.gov agency page link.
   public var url: String? { fields["url"]?.string }
 
+  init(fields: [String: JSONValue]) { self.fields = fields }
+
   /// Decodes an agency attribution while retaining the entire source object.
   /// - Parameter decoder: The decoder to read.
   /// - Throws: `DecodingError` when the value is not a JSON object.
