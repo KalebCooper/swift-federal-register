@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		0315601D797BFB8429F92C38 /* SwiftFederalRegisterDocuments in Frameworks */ = {isa = PBXBuildFile; productRef = 27097FE0E57580B76D1DC5AC /* SwiftFederalRegisterDocuments */; };
+		082500563068626D007BF845 /* DocumentMetadataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 082500553068626D007BF845 /* DocumentMetadataView.swift */; };
+		0825005830686286007BF845 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0825005730686286007BF845 /* SearchView.swift */; };
+		0825005A30686299007BF845 /* AgencyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0825005930686299007BF845 /* AgencyViews.swift */; };
 		20A57BB8C30060D9722D6322 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 833D2DA21E69264CDE3E0FFB /* Assets.xcassets */; };
 		37414047139F79294979A7BA /* SwiftFederalRegisterDocumentsModels in Frameworks */ = {isa = PBXBuildFile; productRef = 43F44D08DA85C4341B03223B /* SwiftFederalRegisterDocumentsModels */; };
 		659F48886D596682D3958476 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0560AFC0ABBE6D9D16893274 /* ContentView.swift */; };
@@ -16,6 +19,9 @@
 
 /* Begin PBXFileReference section */
 		0560AFC0ABBE6D9D16893274 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		082500553068626D007BF845 /* DocumentMetadataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentMetadataView.swift; sourceTree = "<group>"; };
+		0825005730686286007BF845 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
+		0825005930686299007BF845 /* AgencyViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgencyViews.swift; sourceTree = "<group>"; };
 		18607A5C9636E51FAE8B6A4B /* SwiftFederalRegisterDocumentsDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftFederalRegisterDocumentsDemoApp.swift; sourceTree = "<group>"; };
 		4A608FE79945574F08AF1620 /* swift-federal-register */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "swift-federal-register"; path = ../..; sourceTree = SOURCE_ROOT; };
 		833D2DA21E69264CDE3E0FFB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -58,6 +64,9 @@
 				833D2DA21E69264CDE3E0FFB /* Assets.xcassets */,
 				0560AFC0ABBE6D9D16893274 /* ContentView.swift */,
 				18607A5C9636E51FAE8B6A4B /* SwiftFederalRegisterDocumentsDemoApp.swift */,
+				082500553068626D007BF845 /* DocumentMetadataView.swift */,
+				0825005730686286007BF845 /* SearchView.swift */,
+				0825005930686299007BF845 /* AgencyViews.swift */,
 			);
 			path = SwiftFederalRegisterDocumentsDemo;
 			sourceTree = "<group>";
@@ -102,8 +111,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = 073562E00B5781A70CEE1C4B /* Build configuration list for PBXProject "SwiftFederalRegisterDocumentsDemo" */;
 			developmentRegion = en;
@@ -143,8 +150,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0825005830686286007BF845 /* SearchView.swift in Sources */,
 				659F48886D596682D3958476 /* ContentView.swift in Sources */,
 				F91B64887D071CB029F510D8 /* SwiftFederalRegisterDocumentsDemoApp.swift in Sources */,
+				082500563068626D007BF845 /* DocumentMetadataView.swift in Sources */,
+				0825005A30686299007BF845 /* AgencyViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

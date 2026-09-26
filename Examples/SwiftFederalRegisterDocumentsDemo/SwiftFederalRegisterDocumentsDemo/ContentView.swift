@@ -18,6 +18,8 @@ struct ContentView: View {
   var body: some View {
     NavigationStack {
       List {
+        SearchView(client: client)
+        AgencySection(client: client)
         Section("Document detail") {
           TextField("Document number", text: $number)
             .textInputAutocapitalization(.never).autocorrectionDisabled()
