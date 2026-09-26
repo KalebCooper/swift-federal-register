@@ -36,6 +36,12 @@ All notable changes will be documented here, following Keep a Changelog and Sema
   `regulationIDNumbers`, `regulationsDotGovURL`, and `significant`, with the `CFRReference`,
   `DocumentType`, `DocumentTypeCode`, and `RegulationIDNumberInfo` models. Dates stay source strings,
   `type` is unchanged, and an unexpected JSON kind makes a projection nil while `fields` keeps the value.
+- `DocumentSearchQuery`, `DocumentDateFilter`, and `CFRFilter`, validated general search filters for
+  agencies, CFR title and part, docket identifier, effective and publication dates as an exact day,
+  inclusive range, or year, Regulation Identifier Number, full-text term, and document types, with no
+  implicit type condition. Filter strings are kept exactly as given; repeated agencies and types are
+  sent with their multiplicity. `DocumentValidationError` gains `emptyFilterValue`, `invalidCFRFilter`,
+  `invalidDateRange`, and `invalidYear`; exhaustive switches over it need those arms.
 - Source verification, pinned Linux test/demo/documentation scripts, and pending Apple/Android CI lanes.
 
 ### Changed

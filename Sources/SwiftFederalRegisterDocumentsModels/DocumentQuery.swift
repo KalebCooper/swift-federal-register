@@ -47,7 +47,7 @@ public struct DocumentQuery: Hashable, Sendable {
   ) throws(DocumentValidationError) {
     guard (1...1000).contains(pageSize) else { throw .invalidPageSize(pageSize) }
     for date in [publishedFrom, publishedThrough].compactMap({ $0 }) {
-      guard Self.validDate(date) else { throw .invalidDate(date) }
+      guard GregorianDate.isValid(date) else { throw .invalidDate(date) }
     }
     if let publishedFrom, let publishedThrough, publishedFrom > publishedThrough {
       throw .reversedDates
@@ -76,18 +76,5 @@ public struct DocumentQuery: Hashable, Sendable {
     items.append(.init(name: "order", value: order.rawValue))
     items.append(.init(name: "per_page", value: String(pageSize)))
     return items.sorted { $0.name < $1.name }
-  }
-
-  private static func validDate(_ value: String) -> Bool {
-    let parts = value.split(separator: "-", omittingEmptySubsequences: false)
-    guard value.utf8.count == 10, parts.count == 3, parts[0].count == 4,
-      parts[1].count == 2, parts[2].count == 2,
-      parts.allSatisfy({ $0.utf8.allSatisfy { (48...57).contains($0) } }),
-      let year = Int(parts[0]), year > 0, let month = Int(parts[1]), (1...12).contains(month),
-      let day = Int(parts[2])
-    else { return false }
-    let leap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
-    let days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    return (1...days[month - 1]).contains(day)
   }
 }

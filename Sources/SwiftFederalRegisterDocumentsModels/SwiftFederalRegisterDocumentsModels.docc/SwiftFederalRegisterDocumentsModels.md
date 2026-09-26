@@ -50,6 +50,9 @@ while its PDF and XML fields were null. No replacement URLs are synthesized.
 
 ### Operations
 - ``DocumentQuery``
+- ``DocumentSearchQuery``
+- ``DocumentDateFilter``
+- ``CFRFilter``
 - ``DocumentRequest``
 - ``Endpoint``
 - ``DocumentResponse``
