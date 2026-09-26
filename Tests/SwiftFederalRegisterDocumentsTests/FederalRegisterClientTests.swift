@@ -274,6 +274,8 @@ struct FederalRegisterClientTests {
 private struct CustomResponse: Codable, DocumentResponse { let document_number: String }
 extension DocumentRequest where Response == CustomResponse {
   fileprivate static var historical: Self {
-    Self(endpoint: Endpoint(path: "/api/v1/documents/93-32104.json")!)
+    get throws {
+      Self(endpoint: try #require(Endpoint(path: "/api/v1/documents/93-32104.json")))
+    }
   }
 }

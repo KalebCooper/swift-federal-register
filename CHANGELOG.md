@@ -24,3 +24,7 @@ All notable changes will be documented here, following Keep a Changelog and Sema
 
 - Enabled Android, Apple, Linux, lint, source verification, and DocC builds in GitHub Actions.
 - Updated DocC builds to use the generated package scheme; Pages deployment remains disabled.
+
+### Fixed
+
+- Removed force unwraps from custom request test factories rejected by the CI formatter.
