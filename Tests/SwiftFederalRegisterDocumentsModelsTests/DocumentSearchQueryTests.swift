@@ -497,9 +497,32 @@ struct DocumentSearchQueryTests {
         #"{"count":1,"next_page_url":null,"results":[{"document_number":"2024-31396","title":"Example"}],"total_pages":1}"#
           .utf8))
     #expect(try explicitNull.continuation(after: endpoint, seenCursors: []) == nil)
-    // The recorded zero-match body has only description and count, which a page does not decode yet.
-    #expect(throws: (any Error).self) {
-      try DocumentPage.decode(Fixture.searchTerminal.data())
+    // The recorded zero-match body carries only description and count.
+    let terminal = try DocumentPage.decode(Fixture.searchTerminal.data())
+    #expect(terminal.count == 0)
+    #expect(terminal.results.isEmpty)
+    #expect(terminal.totalPages == nil)
+    #expect(terminal.nextPageURL == nil)
+    #expect(
+      terminal.fields["description"]
+        == .string(
+          "Documents matching 'codexNoMatchingDocument987654321' and published from 01/01/2024 to 12/31/2024"
+        ))
+    #expect(terminal.fields.count == 2)
+    #expect(try terminal.continuation(after: endpoint, seenCursors: []) == nil)
+    #expect(try DocumentPage.decode(JSONEncoder().encode(terminal)) == terminal)
+  }
+
+  @Test(
+    "A page without results decodes only for a zero count",
+    arguments: [
+      #"{"count":1}"#, #"{"count":1,"total_pages":1}"#, #"{"count":0,"results":null}"#,
+      #"{"description":"none"}"#,
+    ])
+  func aPageWithoutResultsDecodesOnlyForAZeroCount(_ body: String) throws {
+    // Synthetic literals: no capture omits results beside a nonzero count or publishes a null results.
+    #expect(throws: DecodingError.self) {
+      try DocumentPage.decode(Data(body.utf8))
     }
   }
 

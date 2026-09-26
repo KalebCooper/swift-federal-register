@@ -47,6 +47,9 @@ All notable changes will be documented here, following Keep a Changelog and Sema
   a term containing `+`, `&`, `=`, or `%` reaches the provider as given. The request resolves to the new
   `DocumentRequest.Resolution.documentSearch` case, whose sequence follows validated cursor links;
   exhaustive switches over `Resolution` need that arm.
+- Zero-match search pages decode: `DocumentPage.totalPages` is optional, nil when the provider omits
+  `total_pages`, and an absent `results` beside a zero `count` is an empty page. Absent results with a
+  nonzero count, or a null `results`, remain a decoding error.
 - Source verification, pinned Linux test/demo/documentation scripts, and pending Apple/Android CI lanes.
 
 ### Changed

@@ -31,7 +31,7 @@ extension DocumentPage {
   public func continuation(after endpoint: Endpoint<DocumentPage>, seenCursors: Set<String>)
     throws(DocumentPaginationError) -> (endpoint: Endpoint<DocumentPage>, cursor: String)?
   {
-    guard count >= 0, totalPages >= 0 else { throw .invalidMetadata }
+    guard count >= 0, (totalPages ?? 0) >= 0 else { throw .invalidMetadata }
     guard let nextPageURL else { return nil }
     guard !results.isEmpty else { throw .invalidMetadata }
     guard let next = Endpoint<DocumentPage>(link: nextPageURL),
