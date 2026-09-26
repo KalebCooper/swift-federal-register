@@ -63,7 +63,8 @@ Receipts retain optional caller-supplied retrieval timestamps; no clock instant 
 | Apple DocC | Passed both catalogs, merged archive, and static site with warnings-as-errors against Apple-built simulator modules. |
 | Release demo | Release scheme supplied; verification unavailable while demo workspace operations time out. |
 | Android | Unavailable: no installed Swift SDK or adb on this host. Retained emulator CI pins remain unchanged. |
-| Hosted CI, remote, tag, release | Not performed; no remote is configured. |
+| Hosted CI | CI and Docs runs on September 26 at `07516c9` were skipped because every job was disabled. Validation jobs are now enabled; successful hosted qualification remains pending. |
+| Remote, tag, release | GitHub origin is configured and main was pushed. No tag or release is published. |
 
 The Xcode service was not reset, and sibling workspaces were not closed. Subsequent demo build-log
 retrieval also timed out after 300 seconds, so no hidden demo compiler result is inferred. Opening the package root with
@@ -77,10 +78,12 @@ dependency, Debug/Release schemes, and format 77.
 
 Recover Apple test-runner completion on the generated package scheme and finish the iOS demo build/run
 including Release. Run the Android
-emulator suite and qualify the retained Xcode 27 Apple lane. All retained
-CI/docs lanes remain disabled until qualification is complete; timeouts remain provisional.
+emulator suite and qualify the retained Xcode 27 Apple lane. Linux, Android, Apple, lint,
+source verification, and DocC build jobs are enabled to collect hosted qualification results.
+GitHub Pages deployment remains disabled pending the documentation delivery decision;
+timeouts remain provisional.
 
 Use `bash Scripts/verify.sh` and `--self-test` for implementation changes. The historical scaffold validator
 is no longer an applicable source gate and is not run by the source checker self-test. No missing-subject
-protection was removed. Public repository creation, pushes, tags, releases, and hosted publication still
+protection was removed. Further pushes, tags, releases, and hosted documentation publication still
 require the owner's delivery decision.
