@@ -51,15 +51,26 @@ struct AgencyClientTests {
 
   @Test("All three agency list levels produce the same value and exact request")
   func allThreeAgencyListLevelsProduceTheSameValueAndExactRequest() async throws {
-    let transport = try transport([.agencyCatalog, .agencyCatalog, .agencyCatalog])
+    // Synthetic list built from the recorded agency-epa.json and agency-hhs.json bytes, so each
+    // level decodes two recorded agencies; the full catalog is decoded once in the receipt test.
+    let body =
+      Data("[".utf8) + (try Fixture.agencyEPA.data()) + Data(",".utf8)
+      + (try Fixture.agencyHHS.data()) + Data("]".utf8)
+    let response = Response(body: body, headers: [.contentType: "application/json"], status: .ok)
+    let transport = MockTransport(results: Array(repeating: .success(response), count: 3))
     let client = FederalRegisterClient(transport: transport, userAgent: "test-app")
     let everyday = try await client.agencies()
     let stored: DocumentRequest<AgencyList> = .agencies()
     #expect(try await client.value(for: stored) == everyday)
     #expect(try await client.send(.agencies()) == everyday)
-    #expect(everyday.agencies.count == 473)
-    #expect(everyday.agencies.first?.slug?.rawValue == "action")
-    #expect(everyday.agencies.last?.slug?.rawValue == "workers-compensation-programs-office")
+    #expect(
+      everyday.agencies.map(\.name) == [
+        "Environmental Protection Agency", "Health and Human Services Department",
+      ])
+    #expect(
+      everyday.agencies.map(\.slug) == [
+        .environmentalProtectionAgency, .healthAndHumanServicesDepartment,
+      ])
     #expect(transport.requests.count == 3)
     for call in transport.requests {
       #expect(call.request.path == "/api/v1/agencies.json")
@@ -79,6 +90,10 @@ struct AgencyClientTests {
     #expect(
       receipt.publisher == "Office of the Federal Register, NARA; Government Publishing Office")
     #expect(receipt.retrievedAt == nil)
+    #expect(receipt.value.agencies.count == 473)
+    #expect(receipt.value.agencies.first?.slug?.rawValue == "action")
+    #expect(
+      receipt.value.agencies.last?.slug?.rawValue == "workers-compensation-programs-office")
     #expect(transport.requests.count == 1)
   }
 
