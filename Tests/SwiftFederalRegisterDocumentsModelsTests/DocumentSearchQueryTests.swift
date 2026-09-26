@@ -653,6 +653,13 @@ struct DocumentSearchQueryTests {
     #expect(throws: DocumentPaginationError.nonprogressingPage(1)) {
       try page(next: link("&page=1&per_page=2")).continuation(after: second, seenCursors: [])
     }
+    // A current page that is present but repeated or not an integer never counts as page one.
+    for currentTail in ["&page=3&page=4&per_page=2", "&page=x&per_page=2"] {
+      let malformed = try #require(Endpoint<DocumentPage>(link: link(currentTail)))
+      #expect(throws: DocumentPaginationError.nonprogressingPage(5)) {
+        try page(next: link("&page=5&per_page=2")).continuation(after: malformed, seenCursors: [])
+      }
+    }
     for tail in ["", "&page=", "&page=two", "&page=2&page=3"] {
       #expect(throws: DocumentPaginationError.missingCursor) {
         try page(next: link(tail + "&per_page=2")).continuation(after: first, seenCursors: [])
