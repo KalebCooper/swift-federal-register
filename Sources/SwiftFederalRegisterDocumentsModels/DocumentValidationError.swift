@@ -15,6 +15,8 @@ public enum DocumentValidationError: Error, Hashable, Sendable {
   case invalidDate(String)
   /// A search date range has no bound or a lower bound after its upper bound.
   case invalidDateRange
+  /// A geographic radius lies outside 1...200 miles.
+  case invalidDistanceMiles(Int)
   /// A document number contains characters outside letters, digits, and hyphens.
   case invalidDocumentNumber(String)
   /// Page size lies outside 1 through 1000.

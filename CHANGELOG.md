@@ -8,6 +8,14 @@ All notable changes are documented here, following
 
 ### Added
 
+- Topic, section, and geographic search conditions, plus executive-order-number ordering. Optional
+  radius leaves the provider default unspecified; explicit radii must be 1...200 miles.
+- `PresidentialDocumentTypeCode` replaces the String query subtype. Migrate literals to
+  `.executiveOrder`, dynamic Strings with `.init(rawValue:)`, optional Strings with
+  `.map(PresidentialDocumentTypeCode.init(rawValue:))`, and reads with `?.rawValue`.
+  Response subtype strings remain unchanged. New Order and validation cases affect exhaustive
+  switches; defaulted query parameters can affect stored initializer references.
+
 - Published batch lookup preserves provider order, partial errors, and singleton detail shapes.
   Empty batches throw the new `DocumentValidationError.emptyDocumentNumbers` case; exhaustive
   switches require review.

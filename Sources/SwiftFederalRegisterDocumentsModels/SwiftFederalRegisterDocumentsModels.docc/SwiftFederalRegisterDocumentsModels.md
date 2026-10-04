@@ -182,3 +182,15 @@ No batching ceiling is promised, and the SDK does not chunk or retry missing rec
 
 - ``BatchLookupErrors``
 - ``DocumentBatch``
+
+## Additional search conditions
+
+Topic and section slugs remain open values. Geographic search sends location text unchanged;
+a nil radius preserves the provider default, while explicit values must be 1...200 miles.
+Executive-order-number ordering preserves null-numbered corrections and adds no subtype condition.
+Use `.executiveOrder` for the typed presidential query subtype, or `.init(rawValue:)` for future codes.
+
+- ``DocumentLocation``
+- ``PresidentialDocumentTypeCode``
+- ``SectionIdentifier``
+- ``TopicIdentifier``

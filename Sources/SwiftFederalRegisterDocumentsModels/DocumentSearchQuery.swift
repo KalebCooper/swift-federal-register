@@ -34,7 +34,9 @@ public struct DocumentSearchQuery: Hashable, Sendable {
   public let effectiveDate: DocumentDateFilter?
   /// Selected source fields; an empty array preserves provider defaults.
   public let fields: [DocumentField]
-  /// The requested chronological order.
+  /// A geographic location and optional radius; nil omits both.
+  public let near: DocumentLocation?
+  /// The requested provider order.
   public let order: DocumentQuery.Order
   /// Number of results per response; the API documents 20 by default and 1000 maximum.
   public let pageSize: Int
@@ -42,10 +44,14 @@ public struct DocumentSearchQuery: Hashable, Sendable {
   public let publicationDate: DocumentDateFilter?
   /// One Regulation Identifier Number, sent as `conditions[regulation_id_number]`.
   public let regulationIDNumber: String?
+  /// Open section slugs, sent with repeated-value multiplicity intact.
+  public let sections: [SectionIdentifier]
   /// The provider significance flag under EO 12866; nil omits the condition.
   public let significant: Bool?
   /// The full-text search expression, sent as `conditions[term]` exactly as given.
   public let term: String?
+  /// Open topic slugs, with no local hierarchy or combination rule.
+  public let topics: [TopicIdentifier]
   /// Document types, sent as repeated `conditions[type][]` codes.
   public let types: [DocumentTypeCode]
 
@@ -56,13 +62,16 @@ public struct DocumentSearchQuery: Hashable, Sendable {
   ///   - docketID: A docket identifier; nonempty without control characters when given.
   ///   - effectiveDate: A validated effective-date condition.
   ///   - fields: Requested fields; nonempty selections also send document number and title.
-  ///   - order: Chronological order, defaulting to newest first.
+  ///   - near: Geographic location and optional radius.
+  ///   - order: Provider order, defaulting to newest first.
   ///   - pageSize: A value in 1...1000; defaults to the API's 20.
   ///   - publicationDate: A validated publication-date condition.
   ///   - regulationIDNumber: A Regulation Identifier Number; nonempty without control characters
   ///     when given.
+  ///   - sections: Open nonempty section slugs without control characters.
   ///   - significant: Source significance flag; false is sent as 0.
   ///   - term: A full-text expression; nonempty without control characters when given.
+  ///   - topics: Open nonempty topic slugs without control characters.
   ///   - types: Document type codes; each must be nonempty without control characters.
   /// - Throws: `DocumentValidationError.invalidPageSize` for a page size outside 1...1000, or
   ///   `DocumentValidationError.emptyFilterValue` naming the parameter (`agencies`, `docketID`,
@@ -71,9 +80,11 @@ public struct DocumentSearchQuery: Hashable, Sendable {
   public init(
     agencies: [AgencyIdentifier] = [], cfr: CFRFilter? = nil, docketID: String? = nil,
     effectiveDate: DocumentDateFilter? = nil, fields: [DocumentField] = [],
+    near: DocumentLocation? = nil,
     order: DocumentQuery.Order = .newest,
     pageSize: Int = 20, publicationDate: DocumentDateFilter? = nil,
-    regulationIDNumber: String? = nil, significant: Bool? = nil, term: String? = nil,
+    regulationIDNumber: String? = nil, sections: [SectionIdentifier] = [], significant: Bool? = nil,
+    term: String? = nil, topics: [TopicIdentifier] = [],
     types: [DocumentTypeCode] = []
   ) throws(DocumentValidationError) {
     for agency in agencies where !Self.isUsable(agency.rawValue) {
@@ -86,24 +97,31 @@ public struct DocumentSearchQuery: Hashable, Sendable {
     }
     if let term, !Self.isUsable(term) { throw .emptyFilterValue("term") }
     for type in types where !Self.isUsable(type.rawValue) { throw .emptyFilterValue("types") }
+    for section in sections where !Self.isUsable(section.rawValue) {
+      throw .emptyFilterValue("sections")
+    }
+    for topic in topics where !Self.isUsable(topic.rawValue) { throw .emptyFilterValue("topics") }
     _ = try DocumentField.queryItems(fields)
     self.agencies = agencies
     self.cfr = cfr
     self.docketID = docketID
     self.effectiveDate = effectiveDate
     self.fields = fields
+    self.near = near
     self.order = order
     self.pageSize = pageSize
     self.publicationDate = publicationDate
     self.regulationIDNumber = regulationIDNumber
+    self.sections = sections
     self.significant = significant
     self.term = term
+    self.topics = topics
     self.types = types
   }
 
   /// Every query item this search sends, with raw values, sorted by name and then by value so the
   /// same filters always produce the same sequence.
-  package var queryItems: [URLQueryItem] {
+  var conditionItems: [URLQueryItem] {
     var items: [URLQueryItem] = []
     for agency in agencies {
       items.append(URLQueryItem(name: "conditions[agencies][]", value: agency.rawValue))
@@ -111,21 +129,39 @@ public struct DocumentSearchQuery: Hashable, Sendable {
     if let cfr { items += cfr.queryItems }
     if let docketID { items.append(URLQueryItem(name: "conditions[docket_id]", value: docketID)) }
     if let effectiveDate { items += effectiveDate.queryItems(forKey: "effective_date") }
-    items += (try? DocumentField.queryItems(fields)) ?? []
-    items.append(URLQueryItem(name: "order", value: order.rawValue))
-    items.append(URLQueryItem(name: "per_page", value: String(pageSize)))
+    if let near {
+      items.append(URLQueryItem(name: "conditions[near][location]", value: near.location))
+      if let miles = near.withinMiles {
+        items.append(URLQueryItem(name: "conditions[near][within]", value: String(miles)))
+      }
+    }
     if let publicationDate { items += publicationDate.queryItems(forKey: "publication_date") }
     if let regulationIDNumber {
       items.append(
         URLQueryItem(name: "conditions[regulation_id_number]", value: regulationIDNumber))
     }
+    for section in sections {
+      items.append(URLQueryItem(name: "conditions[sections][]", value: section.rawValue))
+    }
     if let significant {
       items.append(URLQueryItem(name: "conditions[significant]", value: significant ? "1" : "0"))
     }
     if let term { items.append(URLQueryItem(name: "conditions[term]", value: term)) }
+    for topic in topics {
+      items.append(URLQueryItem(name: "conditions[topics][]", value: topic.rawValue))
+    }
     for type in types {
       items.append(URLQueryItem(name: "conditions[type][]", value: type.rawValue))
     }
+    return items.sorted { ($0.name, $0.value ?? "") < ($1.name, $1.value ?? "") }
+  }
+
+  /// Conditions and presentation controls, sorted without discarding duplicate values.
+  package var queryItems: [URLQueryItem] {
+    var items = conditionItems
+    items += (try? DocumentField.queryItems(fields)) ?? []
+    items.append(URLQueryItem(name: "order", value: order.rawValue))
+    items.append(URLQueryItem(name: "per_page", value: String(pageSize)))
     return items.sorted { ($0.name, $0.value ?? "") < ($1.name, $1.value ?? "") }
   }
 

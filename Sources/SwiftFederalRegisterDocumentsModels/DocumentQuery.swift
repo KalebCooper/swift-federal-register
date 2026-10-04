@@ -10,22 +10,24 @@ import Foundation
 /// let query = try DocumentQuery(pageSize: 2, publishedFrom: "1994-01-01", publishedThrough: "1994-12-31")
 /// ```
 public struct DocumentQuery: Hashable, Sendable {
-  /// Chronological ordering supported by cursor traversal.
+  /// Provider ordering supported by verified cursor or page-number traversal.
   public enum Order: String, Codable, Sendable {
+    /// Provider executive-order-number ordering, including unnumbered records and corrections.
+    case executiveOrderNumber = "executive_order_number"
     /// Most recently published first.
     case newest
     /// Earliest published first.
     case oldest
   }
 
-  /// The requested chronological order.
+  /// The requested provider order.
   public let order: Order
   /// Number of results per response; the API documents 20 by default and 1000 maximum.
   public let pageSize: Int
   /// An open provider president identifier, or nil for all presidents.
   public let president: String?
   /// An open provider presidential-document-type identifier.
-  public let presidentialDocumentType: String?
+  public let presidentialDocumentType: PresidentialDocumentTypeCode?
   /// Inclusive lower publication-date bound, or nil.
   public let publishedFrom: String?
   /// Inclusive upper publication-date bound, or nil.
@@ -33,7 +35,7 @@ public struct DocumentQuery: Hashable, Sendable {
 
   /// Creates validated immutable filters; no request is sent.
   /// - Parameters:
-  ///   - order: Chronological order, defaulting to newest first.
+  ///   - order: Provider order, defaulting to newest first.
   ///   - pageSize: A value in 1...1000; defaults to the API's 20.
   ///   - president: Provider identifier; unknown values are sent unchanged.
   ///   - presidentialDocumentType: Provider type identifier; unknown values remain valid inputs.
@@ -42,7 +44,7 @@ public struct DocumentQuery: Hashable, Sendable {
   /// - Throws: `DocumentValidationError` for invalid page sizes or dates.
   public init(
     order: Order = .newest, pageSize: Int = 20, president: String? = nil,
-    presidentialDocumentType: String? = nil, publishedFrom: String? = nil,
+    presidentialDocumentType: PresidentialDocumentTypeCode? = nil, publishedFrom: String? = nil,
     publishedThrough: String? = nil
   ) throws(DocumentValidationError) {
     guard (1...1000).contains(pageSize) else { throw .invalidPageSize(pageSize) }
@@ -65,7 +67,9 @@ public struct DocumentQuery: Hashable, Sendable {
     if let president { items.append(.init(name: "conditions[president][]", value: president)) }
     if let presidentialDocumentType {
       items.append(
-        .init(name: "conditions[presidential_document_type][]", value: presidentialDocumentType))
+        .init(
+          name: "conditions[presidential_document_type][]", value: presidentialDocumentType.rawValue
+        ))
     }
     if let publishedFrom {
       items.append(.init(name: "conditions[publication_date][gte]", value: publishedFrom))
