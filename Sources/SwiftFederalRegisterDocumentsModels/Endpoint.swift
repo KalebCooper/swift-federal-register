@@ -52,7 +52,8 @@ public struct Endpoint<Response>: Hashable, Sendable {
         $0.isEmpty || $0 == "." || $0 == ".."
       }),
       decoded == parts.percentEncodedPath,
-      Self.isInspectionPath(decoded) || Self.isIssuePath(decoded) || decoded == "/api/v1/documents"
+      Self.isSuggestedPath(decoded) || Self.isInspectionPath(decoded) || Self.isIssuePath(decoded)
+        || decoded == "/api/v1/documents"
         || decoded == "/api/v1/documents.json"
         || decoded.hasPrefix("/api/v1/documents/") || decoded.hasPrefix("/documents/full_text/")
         || decoded == "/api/v1/agencies.json"
@@ -111,6 +112,13 @@ public struct Endpoint<Response>: Hashable, Sendable {
     let prefix = "/api/v1/issues/"
     guard path.hasPrefix(prefix), path.hasSuffix(".json") else { return false }
     return GregorianDate.isValid(String(path.dropFirst(prefix.count).dropLast(5)))
+  }
+
+  private static func isSuggestedPath(_ path: String) -> Bool {
+    if path == "/api/v1/suggested_searches.json" { return true }
+    let prefix = "/api/v1/suggested_searches/"
+    guard path.hasPrefix(prefix), path.hasSuffix(".json") else { return false }
+    return isPathSegment(String(path.dropFirst(prefix.count).dropLast(5)))
   }
 
   /// Whether a provider identifier can form one path segment: nonempty ASCII letters, digits, and hyphens.
@@ -304,5 +312,39 @@ extension Endpoint where Response == PublicInspectionPage {
   public static func searchPublicInspectionDocuments(matching query: PublicInspectionQuery) -> Self
   {
     builtIn(path: "/api/v1/public-inspection-documents.json?" + formEncodedQuery(query.queryItems))
+  }
+}
+
+extension Endpoint where Response == SuggestedSearch {
+  /// Describes one suggested-search metadata lookup; its conditions are not executed.
+  /// - Parameter identifier: A nonempty slug using ASCII letters, digits, and hyphens.
+  /// - Returns: One metadata endpoint.
+  /// - Throws: `DocumentValidationError.invalidSuggestedSearchIdentifier` for unsafe input.
+  public static func suggestedSearch(_ identifier: SuggestedSearchIdentifier)
+    throws(DocumentValidationError) -> Self
+  {
+    guard isPathSegment(identifier.rawValue) else {
+      throw .invalidSuggestedSearchIdentifier(identifier.rawValue)
+    }
+    return builtIn(path: "/api/v1/suggested_searches/" + identifier.rawValue + ".json")
+  }
+}
+
+extension Endpoint where Response == SuggestedSearchCatalog {
+  /// Describes grouped discovery metadata, optionally filtered by an open section slug.
+  /// - Parameter section: Nil omits the section condition.
+  /// - Returns: One catalog endpoint without continuation.
+  /// - Throws: `DocumentValidationError.emptyFilterValue` for empty or control-character input.
+  public static func suggestedSearches(section: SectionIdentifier? = nil)
+    throws(DocumentValidationError) -> Self
+  {
+    if let section, !DocumentSearchQuery.isUsable(section.rawValue) {
+      throw .emptyFilterValue("section")
+    }
+    return builtIn(
+      path: "/api/v1/suggested_searches.json"
+        + (section.map {
+          "?" + formEncodedQuery([URLQueryItem(name: "conditions[sections]", value: $0.rawValue)])
+        } ?? ""))
   }
 }

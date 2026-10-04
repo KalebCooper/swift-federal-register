@@ -21,6 +21,8 @@ public enum DocumentValidationError: Error, Hashable, Sendable {
   case invalidDocumentNumber(String)
   /// Page size lies outside 1 through 1000.
   case invalidPageSize(Int)
+  /// A suggested-search slug contains characters outside letters, digits, and hyphens.
+  case invalidSuggestedSearchIdentifier(String)
   /// A search year lies outside 1 through 9999.
   case invalidYear(Int)
   /// The lower publication-date bound is after the upper bound.

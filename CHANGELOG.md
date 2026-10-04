@@ -8,6 +8,9 @@ All notable changes are documented here, following
 
 ### Added
 
+- Suggested-search catalog and detail discovery retain markup and raw search conditions without
+  automatic conversion or execution. Added the `invalidSuggestedSearchIdentifier` validation case.
+
 - Inspection search and lazy page, item, and receipt sequences follow verified increasing page-number
   links, with strict route aliases and routing parameters. Added `Resolution.publicInspectionSearch`;
   consumers switching exhaustively must handle this distinct policy. Custom requests remain one page.

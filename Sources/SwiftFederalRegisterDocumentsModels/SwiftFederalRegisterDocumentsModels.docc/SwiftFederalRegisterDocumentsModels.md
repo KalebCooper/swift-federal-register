@@ -233,3 +233,13 @@ Current and dated listings never become search sequences. Counts do not guarante
 - ``PublicInspectionFilingFilter``
 - ``PublicInspectionPage``
 - ``PublicInspectionQuery``
+
+## Suggested searches
+
+Suggested searches are discovery metadata. Conditions can contain internal agency IDs and incomplete
+geographic conditions; the SDK neither converts them into a query nor executes them automatically.
+Description markup is retained without rendering. Counts and position may be absent from details.
+
+- ``SuggestedSearch``
+- ``SuggestedSearchCatalog``
+- ``SuggestedSearchIdentifier``

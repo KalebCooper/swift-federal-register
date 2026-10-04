@@ -203,3 +203,27 @@ extension DocumentRequest where Response == PublicInspectionPage {
     Self(resolution: .publicInspectionSearch(.searchPublicInspectionDocuments(matching: query)))
   }
 }
+
+extension DocumentRequest where Response == SuggestedSearch {
+  /// Describes suggested-search metadata without executing its conditions.
+  /// - Parameter identifier: A safe open provider slug.
+  /// - Returns: One reusable request.
+  /// - Throws: `DocumentValidationError.invalidSuggestedSearchIdentifier` for unsafe input.
+  public static func suggestedSearch(_ identifier: SuggestedSearchIdentifier)
+    throws(DocumentValidationError) -> Self
+  {
+    Self(endpoint: try .suggestedSearch(identifier))
+  }
+}
+
+extension DocumentRequest where Response == SuggestedSearchCatalog {
+  /// Describes a grouped catalog without automatic execution or pagination.
+  /// - Parameter section: Optional open section slug.
+  /// - Returns: One reusable catalog request.
+  /// - Throws: `DocumentValidationError.emptyFilterValue` for invalid section input.
+  public static func suggestedSearches(section: SectionIdentifier? = nil)
+    throws(DocumentValidationError) -> Self
+  {
+    Self(endpoint: try .suggestedSearches(section: section))
+  }
+}
