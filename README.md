@@ -7,8 +7,9 @@ Swift models and a typed client for the [Federal Register API](https://www.feder
 `SwiftFederalRegisterDocumentsModels` describes each supported FederalRegister.gov request as a plain
 value and decodes every response, so any networking stack can send them. `SwiftFederalRegisterDocuments`
 sends them for you through [swifty-networking](https://github.com/KalebCooper/swifty-networking),
-pages search results on demand, and maps failures into one typed error. Both run on Apple platforms,
-Linux, and Android.
+pages search results on demand, and maps failures into one typed error. The package supports Apple platforms,
+Linux, and Android. See [implementation readiness](IMPLEMENTATION_READINESS.md) for the exact
+revision and platform verification limits; local additions are not yet on the published site.
 
 The full reference is the
 [documentation site](https://kalebcooper.github.io/swift-federal-register/documentation/).
@@ -20,7 +21,12 @@ in [CHANGELOG.md](CHANGELOG.md).
 
 | Feature | Service routes | Client methods | Paged |
 |---|---|---|---|
-| Document detail | `/api/v1/documents/{number}.json` | `document(_:)` | No |
+| Published batch | `/api/v1/documents/{numbers}.json` | `documents(numbered:fields:)` | No |
+| Facets | `/api/v1/documents/facets/{facet}` | `documentFacets(_:matching:)` | No |
+| Daily issue | `/api/v1/issues/{date}.json` | `issueTableOfContents(on:)` | No |
+| Public inspection | `/api/v1/public-inspection-documents` and verified aliases | current/dated listings, detail, batch, search | Search only |
+| Suggested searches | `/api/v1/suggested_searches.json`, detail slug | `suggestedSearches(section:)`, `suggestedSearch(_:)` | No |
+| Document detail | `/api/v1/documents/{number}.json` | `document(_:)`, `document(_:fields:)` | No |
 | Full text | a document's advertised HTML, text, and XML links | `content(_:for:)` | No |
 | Document search | `/api/v1/documents.json` | `searchDocuments(matching:)`, `documents(searching:)` | Yes |
 | Presidential documents | `/api/v1/documents.json`, presidential type | `presidentialDocuments(matching:)`, `documents(matching:)` | Yes |
@@ -33,7 +39,8 @@ publisher attribution, and validated following of every next-page link the servi
 What the package does not guarantee, because the service does not:
 
 - **Completeness.** A search is not a stable snapshot. `total_pages` can be capped while the next
-  link keeps going, and pages beyond the service's depth limit are not promised. A missing record
+  link keeps going. The developer guide describes a first-2000-results limit; observed cursor links
+  and capped totals are separate evidence, and pages beyond the service's depth limit are not promised. A missing record
   does not prove that an action did not occur.
 - **Format availability.** Older documents can have null PDF or XML links, and an advertised link can
   still return 404. No replacement link is guessed.
@@ -83,9 +90,10 @@ for try await result in client.documents(searching: query) {
 ```
 
 Filters cover agencies, CFR title and part, docket, effective and publication dates, Regulation
-Identifier Number, full-text term, and document type. Results come newest or oldest first. Search
-results carry only the service's default fields, so fetch a document's detail to read its full
-regulatory metadata:
+Identifier Number, full-text term, document type, significance, topics, sections, and geographic
+location. Results can use newest, oldest, or executive-order-number ordering. Without explicit field
+selection, searches retain the service's default projection. Request selected fields or fetch detail
+when you need more regulatory metadata:
 
 ```swift
 if let result = firstPage.results.first {
@@ -93,6 +101,51 @@ if let result = firstPage.results.first {
   print(rule.cfrReferences ?? [], rule.regulationIDNumbers ?? [], rule.docketIDs ?? [])
 }
 ```
+
+### Fields, facets, batches, and issues
+
+```swift
+let expanded = try DocumentSearchQuery(
+  fields: [.publicationDate, .significant],
+  near: .init(location: "Chicago, IL", withinMiles: 25),
+  sections: [.environment], significant: false,
+  topics: [.init(rawValue: "air-pollution-control")])
+let counts = try await client.documentFacets(.type, matching: expanded)
+let batch = try await client.documents(numbered: ["2024-31396", "2024-29463"])
+let issue = try await client.issueTableOfContents(on: "2024-12-31")
+```
+
+Empty field selections preserve provider defaults. Nonempty selections automatically include
+`document_number` and `title`; custom response types remain available for arbitrary sparse projections.
+Unknown field names remain sendable, but the provider may reject them. Facets send only conditions,
+excluding fields, order, and page size. Counts do not establish complete or mutually exclusive coverage.
+
+Batches preserve provider order, deduplication, and successful partial errors without retries or
+chunking. A singleton returns a one-element view over its original detail object, with no invented
+count. A missing singleton may produce an HTTP failure. No unlimited URL length is promised.
+Issue references are not fetched automatically; resolve selected references with an explicit batch call.
+
+### Public inspection and suggested searches
+
+```swift
+let listing = try await client.currentPublicInspectionDocuments()
+let dated = try await client.publicInspectionDocuments(availableOn: "2024-12-30")
+let inspection = try PublicInspectionQuery(pageSize: 2, specialFiling: .regular)
+for try await item in client.publicInspectionDocuments(searching: inspection) {
+  print(item.title, item.filedAt ?? "", item.publicationDate ?? "")
+}
+let suggestions = try await client.suggestedSearches(section: .environment)
+let suggestion = try await client.suggestedSearch(.init(rawValue: "climate-change"))
+```
+
+Inspection has separate records and lazy page, item, and receipt sequences. Filing, PDF update,
+listing update, and intended publication dates are independent source facts. A scheduled date does
+not prove publication; absence does not prove withdrawal. Dated listings accept only a date because
+the provider bypasses search filters in that mode. Search follows only verified increasing page links.
+Custom endpoint requests still return one page.
+
+Suggested conditions remain raw discovery metadata. They can contain internal agency IDs or incomplete
+geographic conditions and are never automatically converted or executed. Description markup stays text.
 
 ### Presidential documents
 
@@ -104,7 +157,8 @@ for try await document in client.documents(matching: query) {
 ```
 
 `DocumentQuery` always searches presidential documents, optionally narrowed by president and
-presidential document type.
+presidential document type, using open codes such as `.executiveOrder`. Executive-order-number
+ordering preserves unnumbered corrections and adds no subtype filter of its own.
 
 ### Paging
 
@@ -203,7 +257,8 @@ or redirect; retries and backoff are yours.
 
 [`Examples/SwiftFederalRegisterDocumentsDemo`](Examples/SwiftFederalRegisterDocumentsDemo) is an iOS
 app that searches documents by agency, term, and type, shows a result's regulatory metadata, browses
-the agency catalog, and loads a document's full text. It references this package by local path; open
+the agency catalog, shows issue references and inspection records, and loads a document's full text.
+Inspection pages support explicit cancellation; see readiness for the remaining runtime qualification. It references this package by local path; open
 `SwiftFederalRegisterDocumentsDemo.xcodeproj` with the package itself closed in Xcode, since Xcode
 opens a local package in only one window.
 
@@ -214,7 +269,7 @@ against recorded responses, with no network access. See its [README](Examples/Of
 
 | Product | What it is | Depends on |
 |---|---|---|
-| `SwiftFederalRegisterDocumentsModels` | `Codable` documents, pages, and agencies, validated search queries, typed `Endpoint` and `DocumentRequest` values, and full-text decoding. Usable with any networking stack. | Nothing. |
+| `SwiftFederalRegisterDocumentsModels` | `Codable` documents, inspection records, issues, facets, discovery catalogs, and pages, validated search queries, typed `Endpoint` and `DocumentRequest` values, and full-text decoding. Usable with any networking stack. | Nothing. |
 | `SwiftFederalRegisterDocuments` | `FederalRegisterClient`, `FederalRegisterError`, and the lazy page, document, and receipt sequences. Re-exports swifty-networking's `HTTPCore`, so `Transport` and `TransportError` need no import of their own. | `SwiftFederalRegisterDocumentsModels`, swifty-networking, swift-http-types. |
 
 A consumer with its own networking stack adds only `SwiftFederalRegisterDocumentsModels` and fetches

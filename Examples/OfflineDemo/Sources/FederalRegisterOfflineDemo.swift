@@ -18,6 +18,7 @@ struct FederalRegisterOfflineDemo {
     }
     try await runAgencyAndSearchFlow(recorded: recorded)
     print("")
+    try await runExpandedFlow(recorded: recorded)
     try await runPresidentialFlow(recorded: recorded)
   }
 
@@ -86,6 +87,58 @@ struct FederalRegisterOfflineDemo {
     return values.isEmpty ? "none (empty list)" : values.joined(separator: separator)
   }
 
+  /// Selected fields, explicit issue references, inspection pages, and discovery metadata.
+  static func runExpandedFlow(recorded: (String) throws -> Result<Response, TransportError>)
+    async throws
+  {
+    let transport = MockTransport(results: [
+      try recorded("fields-detail.json"), try recorded("issue.json"),
+      try recorded("published-batch-single.json"), try recorded("facets-type.json"),
+      try recorded("inspection-current.json"), try recorded("inspection-date-empty.json"),
+      try recorded("inspection-detail.json"), try recorded("inspection-search.json"),
+      try recorded("inspection-search-two.json"), try recorded("suggested-section.json"),
+      try recorded("suggested-detail.json"),
+    ])
+    let client = FederalRegisterClient(
+      transport: transport, userAgent: "swift-federal-register-offline-demo")
+    let selected = try await client.document("2024-31396", fields: [.significant])
+    print("Selected source fields: \(selected.fields.keys.sorted())")
+    let issue = try await client.issueTableOfContents(on: "2024-12-31")
+    let references =
+      issue.agencies?.first { $0.slug == "environmental-protection-agency" }?
+      .documentCategories?.first?.documents?.first?.documentNumbers ?? []
+    guard references == ["2024-31396"] else { throw DemoFailure.unexpectedRecording }
+    let batch = try await client.documents(numbered: references)
+    print(
+      "Explicit issue reference lookup: \(batch.results.map(\.documentNumber)); count \(batch.count.map(String.init) ?? "not supplied")"
+    )
+    let counts = try await client.documentFacets(.type, matching: .init())
+    print("Facet keys: \(counts.buckets?.keys.sorted() ?? [])")
+    let current = try await client.currentPublicInspectionDocuments()
+    print(
+      "Inspection listing: \(current.count); regular update \(current.regularFilingsUpdatedAt ?? "not supplied")"
+    )
+    let empty = try await client.publicInspectionDocuments(availableOn: "2024-12-29")
+    guard empty.results.isEmpty else { throw DemoFailure.unexpectedRecording }
+    let detail = try await client.publicInspectionDocument("2026-19958")
+    print(
+      "Inspection filed: \(detail.filedAt ?? "not supplied"); intended publication: \(detail.publicationDate ?? "not supplied")"
+    )
+    var receipts = client.publicInspectionResponses(searching: try .init(pageSize: 2))
+      .makeAsyncIterator()
+    for _ in 0..<2 {
+      guard let receipt = try await receipts.next() else { throw DemoFailure.unexpectedRecording }
+      print("Inspection receipt: \(receipt.requestURL); \(receipt.body.count) bytes")
+    }
+    let suggestions = try await client.suggestedSearches(section: .environment)
+    let suggestion = try await client.suggestedSearch(.init(rawValue: "climate-change"))
+    print(
+      "Suggested groups: \(suggestions.searchesBySection?.keys.sorted() ?? []); \(suggestion.title ?? "not supplied")"
+    )
+    guard transport.requests.count == 11 else { throw DemoFailure.unexpectedRecording }
+    print("Sent 11 expanded requests; no implicit hydration or suggested-search execution.")
+  }
+
   /// Historical presidential evidence and two lazy cursor pages.
   static func runPresidentialFlow(
     recorded: (String) throws -> Result<Response, TransportError>
@@ -119,4 +172,8 @@ struct FederalRegisterOfflineDemo {
     }
     print("Sent \(transport.requests.count) recorded requests; stopped without prefetching.")
   }
+}
+
+private enum DemoFailure: Error {
+  case unexpectedRecording
 }

@@ -19,7 +19,7 @@ bash Scripts/linux-demo.sh
 
 ## What it shows
 
-The tool runs two independent flows, each with its own recorded transport, and prints how many
+The tool runs three independent flows, each with its own recorded transport, and prints how many
 requests each one made.
 
 **Agencies, search, and regulatory metadata** (5 requests):
@@ -36,7 +36,12 @@ requests each one made.
   dates, its null PDF and XML links, and the size of its original text representation.
 - Walks two presidential search pages and prints each page's receipt URL and documents.
 
-Neither flow fetches a third page.
+No flow fetches a third page.
+
+**Expanded source operations** (11 requests): selected fields, daily issue contents, an explicit
+singleton lookup of an issue reference, keyed facets, current and empty dated inspection listings,
+inspection detail with distinct filing/publication dates, two inspection receipt pages, and suggested
+search catalog/detail. Suggested conditions are never executed.
 
 ## How it works
 

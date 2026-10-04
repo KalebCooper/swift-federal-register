@@ -48,7 +48,7 @@ range such as `"1-50"`.
 
 Strings are sent exactly as written. Repeated agencies and types are sent as repeated parameters; the
 service does not document whether it combines them with AND or OR, and this package promises
-neither. Unknown agency slugs and type codes are valid inputs. Results are newest or oldest first;
+neither. Unknown agency slugs and type codes are valid inputs. Results support newest, oldest, or executive-order-number ordering;
 relevance order is not a query option, though a consumer can build it as a custom ``Endpoint`` with
 ``Endpoint/init(accept:link:)``.
 
@@ -94,7 +94,7 @@ print(rule.regulationIDNumbers ?? [], rule.docketIDs ?? [], rule.significant as 
 A projection is never a decoding failure. It is nil when its key is absent, null, or of an
 unexpected JSON kind, while `fields` keeps the raw value. ``FederalRegisterDocument/cfrReferences``
 is all or nothing: one malformed reference makes the whole list nil. Search results carry only the
-service's default fields, so most regulatory projections are nil on them; decode a document's detail
+service's default fields unless selected explicitly, so regulatory projections may be nil; decode a document's detail
 to read its full metadata.
 
 Documents publish a ``DocumentType`` label such as `Rule`, while searches take a ``DocumentTypeCode``
@@ -167,7 +167,7 @@ Federal Register record does not prove that an action did not occur.
 
 ## Selected fields
 
-Use `DocumentField` with document detail or `DocumentSearchQuery(fields:significant:)`.
+Use `DocumentField` with document detail or the `fields` and `significant` parameters of `DocumentSearchQuery`.
 An empty selection preserves provider defaults. A nonempty selection includes `document_number`
 and `title`; it does not inject values into a sparse response. False significance sends `0`.
 Unknown field names are preserved and may be rejected by the provider.

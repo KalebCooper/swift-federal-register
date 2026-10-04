@@ -20,6 +20,7 @@ struct ContentView: View {
       List {
         SearchView(client: client)
         AgencySection(client: client)
+        ExpandedSourcesView(client: client)
         Section("Document detail") {
           TextField("Document number", text: $number)
             .textInputAutocapitalization(.never).autocorrectionDisabled()
@@ -133,5 +134,142 @@ struct ContentView: View {
       iterator = client.documentPages(matching: try DocumentQuery(pageSize: 5)).makeAsyncIterator()
       await loadPage()
     } catch { errorMessage = String(describing: error) }
+  }
+}
+
+@MainActor
+private struct ExpandedSourcesView: View {
+  let client: FederalRegisterClient
+
+  @State private var inspection: [PublicInspectionDocument] = []
+  @State private var inspectionDetail: PublicInspectionDocument?
+  @State private var inspectionIterator:
+    PublicInspectionPageSequence<PublicInspectionPage>.Iterator?
+  @State private var issue: IssueTableOfContents?
+  @State private var issueDate = "2024-12-31"
+  @State private var message: String?
+  @State private var published: [FederalRegisterDocument] = []
+  @State private var task: Task<Void, Never>?
+  @State private var term = ""
+
+  var body: some View {
+    Section("Issues and public inspection") {
+      TextField("Issue date (YYYY-MM-DD)", text: $issueDate)
+        .textInputAutocapitalization(.never).autocorrectionDisabled()
+      Button("Load issue contents") {
+        start {
+          issue = nil
+          published = []
+          issue = try await client.issueTableOfContents(on: issueDate)
+          if issue?.agencies?.isEmpty == true { message = "This issue contains no agency groups." }
+        }
+      }.disabled(task != nil)
+      if let issue {
+        Text("Issue publication: " + (issue.meta?.publicationDate ?? "Not supplied"))
+        ForEach(Array((issue.agencies ?? []).enumerated()), id: \.offset) { _, agency in
+          DisclosureGroup(agency.name ?? "Agency name not supplied") {
+            ForEach(Array((agency.documentCategories ?? []).enumerated()), id: \.offset) {
+              _, category in
+              Text(category.type ?? "Document type not supplied").font(.headline)
+              ForEach(Array((category.documents ?? []).enumerated()), id: \.offset) { _, entry in
+                Text([entry.subject1, entry.subject2].compactMap { $0 }.joined(separator: ": "))
+                if let numbers = entry.documentNumbers, !numbers.isEmpty {
+                  Button("Load referenced documents") {
+                    start { published = try await client.documents(numbered: numbers).results }
+                  }.disabled(task != nil)
+                }
+              }
+            }
+          }
+        }
+      }
+      ForEach(Array(published.enumerated()), id: \.offset) { _, document in
+        VStack(alignment: .leading) {
+          Text(document.title)
+          Text("Published: " + (document.publicationDate ?? "Not supplied")).font(.caption)
+        }
+      }
+
+      Button("Load current inspection listing") {
+        start {
+          inspectionIterator = nil
+          inspectionDetail = nil
+          inspection = try await client.currentPublicInspectionDocuments().results
+          if inspection.isEmpty { message = "No inspection records in this listing." }
+        }
+      }.disabled(task != nil)
+      TextField("Inspection search term (optional)", text: $term)
+        .textInputAutocapitalization(.never).autocorrectionDisabled()
+      Button("Search public inspection") {
+        start {
+          inspection = []
+          inspectionDetail = nil
+          inspectionIterator = nil
+          let query = try PublicInspectionQuery(pageSize: 20, term: term.isEmpty ? nil : term)
+          inspectionIterator = client.publicInspectionPages(searching: query).makeAsyncIterator()
+          try await nextInspectionPage()
+        }
+      }.disabled(task != nil)
+      ForEach(Array(inspection.enumerated()), id: \.offset) { _, record in
+        Button {
+          start {
+            inspectionDetail = try await client.publicInspectionDocument(record.documentNumber)
+          }
+        } label: {
+          VStack(alignment: .leading) {
+            Text(record.title)
+            Text("Filed: " + (record.filedAt ?? "Not supplied")).font(.caption)
+            Text("Intended publication: " + (record.publicationDate ?? "Not supplied")).font(
+              .caption)
+          }
+        }.disabled(task != nil)
+      }
+      if inspectionIterator != nil {
+        Button("Load next inspection page") { start { try await nextInspectionPage() } }
+          .disabled(task != nil)
+      }
+      if let inspectionDetail {
+        Text(inspectionDetail.documentNumber + ": " + inspectionDetail.title).font(.headline)
+        LabeledContent("Filed", value: inspectionDetail.filedAt ?? "Not supplied")
+        LabeledContent(
+          "Intended publication", value: inspectionDetail.publicationDate ?? "Not supplied")
+        LabeledContent("PDF updated", value: inspectionDetail.pdfUpdatedAt ?? "Not supplied")
+        if let editorial = inspectionDetail.editorialNote { Text(editorial) }
+      }
+      if task != nil {
+        ProgressView("Loading source")
+        Button("Cancel request", role: .cancel) { task?.cancel() }
+      }
+      if let message { Text(message).textSelection(.enabled) }
+      Text(
+        "Public inspection is a preview. An intended publication date is not proof of publication."
+      )
+      .font(.caption)
+      Text("Office of the Federal Register, NARA; Government Publishing Office").font(.caption)
+    }
+    .onDisappear { task?.cancel() }
+  }
+
+  private func nextInspectionPage() async throws {
+    guard var iterator = inspectionIterator else { return }
+    inspectionIterator = nil
+    guard let page = try await iterator.next() else {
+      if inspection.isEmpty { message = "No matching inspection records." }
+      return
+    }
+    inspection += page.results
+    if page.nextPageURL != nil { inspectionIterator = iterator }
+    if inspection.isEmpty { message = "No matching inspection records." }
+  }
+
+  private func start(_ operation: @escaping @MainActor () async throws -> Void) {
+    guard task == nil else { return }
+    message = nil
+    task = Task { @MainActor in
+      do { try await operation() } catch {
+        message = Task.isCancelled ? "Request cancelled." : String(describing: error)
+      }
+      task = nil
+    }
   }
 }

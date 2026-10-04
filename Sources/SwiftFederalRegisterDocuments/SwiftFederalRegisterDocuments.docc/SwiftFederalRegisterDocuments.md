@@ -52,11 +52,11 @@ for try await result in client.documents(searching: query) {
 ```
 
 ``FederalRegisterClient/searchDocuments(matching:)`` retrieves one page; a zero-match search returns
-an empty page. Search results carry only the service's default fields, so regulatory metadata such as
+an empty page. Without explicit field selection, search results carry the service's default fields, so regulatory metadata such as
 CFR references is usually nil on them. A result never triggers a detail fetch; call
 ``FederalRegisterClient/document(_:)`` when you need the full record.
 
-Results are newest or oldest first. Relevance order is not a query option: a consumer-defined
+Results support newest, oldest, and executive-order-number ordering. Relevance order is not a query option: a consumer-defined
 relevance `Endpoint` yields its first page only, and `DocumentPage.continuation(after:seenCursors:)`
 validates its next link if you want to go further.
 
@@ -152,3 +152,54 @@ edition.
 
 - ``DocumentPageSequence``
 - ``DocumentSequence``
+
+### Fields, facets, batches, and issues
+
+```swift
+let expanded = try DocumentSearchQuery(
+  fields: [.publicationDate, .significant],
+  near: .init(location: "Chicago, IL", withinMiles: 25),
+  sections: [.environment], significant: false,
+  topics: [.init(rawValue: "air-pollution-control")])
+let counts = try await client.documentFacets(.type, matching: expanded)
+let batch = try await client.documents(numbered: ["2024-31396", "2024-29463"])
+let issue = try await client.issueTableOfContents(on: "2024-12-31")
+```
+
+Empty field selections preserve provider defaults. Nonempty selections automatically include
+`document_number` and `title`; custom response types remain available for arbitrary sparse projections.
+Unknown field names remain sendable, but the provider may reject them. Facets send only conditions,
+excluding fields, order, and page size. Counts do not establish complete or mutually exclusive coverage.
+
+Batches preserve provider order, deduplication, and successful partial errors without retries or
+chunking. A singleton returns a one-element view over its original detail object, with no invented
+count. A missing singleton may produce an HTTP failure. No unlimited URL length is promised.
+Issue references are not fetched automatically; resolve selected references with an explicit batch call.
+
+### Public inspection and suggested searches
+
+```swift
+let listing = try await client.currentPublicInspectionDocuments()
+let dated = try await client.publicInspectionDocuments(availableOn: "2024-12-30")
+let inspection = try PublicInspectionQuery(pageSize: 2, specialFiling: .regular)
+for try await item in client.publicInspectionDocuments(searching: inspection) {
+  print(item.title, item.filedAt ?? "", item.publicationDate ?? "")
+}
+let suggestions = try await client.suggestedSearches(section: .environment)
+let suggestion = try await client.suggestedSearch(.init(rawValue: "climate-change"))
+```
+
+Inspection has separate records and lazy page, item, and receipt sequences. Filing, PDF update,
+listing update, and intended publication dates are independent source facts. A scheduled date does
+not prove publication; absence does not prove withdrawal. Dated listings accept only a date because
+the provider bypasses search filters in that mode. Search follows only verified increasing page links.
+Custom endpoint requests still return one page.
+
+Suggested conditions remain raw discovery metadata. They can contain internal agency IDs or incomplete
+geographic conditions and are never automatically converted or executed. Description markup stays text.
+
+
+## Expanded sequences
+
+- ``PublicInspectionPageSequence``
+- ``PublicInspectionSequence``
