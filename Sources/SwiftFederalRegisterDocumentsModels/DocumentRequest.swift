@@ -66,7 +66,19 @@ extension DocumentRequest where Response == FederalRegisterDocument {
   /// - Returns: A reusable detail request.
   /// - Throws: `DocumentValidationError.invalidDocumentNumber` for invalid input.
   public static func document(_ number: String) throws(DocumentValidationError) -> Self {
-    Self(endpoint: try .document(number))
+    try document(number, fields: [])
+  }
+
+  /// Describes a selected document detail with required identity and title.
+  /// - Parameters:
+  ///   - number: The original provider number.
+  ///   - fields: Empty preserves defaults; nonempty adds document number and title.
+  /// - Returns: A single-operation request.
+  /// - Throws: `DocumentValidationError` for invalid input.
+  public static func document(_ number: String, fields: [DocumentField])
+    throws(DocumentValidationError) -> Self
+  {
+    Self(endpoint: try .document(number, fields: fields))
   }
 }
 

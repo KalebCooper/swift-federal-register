@@ -164,3 +164,12 @@ Federal Register record does not prove that an action did not occur.
 - ``DocumentContentError``
 - ``DocumentPaginationError``
 - ``DocumentValidationError``
+
+## Selected fields
+
+Use `DocumentField` with document detail or `DocumentSearchQuery(fields:significant:)`.
+An empty selection preserves provider defaults. A nonempty selection includes `document_number`
+and `title`; it does not inject values into a sparse response. False significance sends `0`.
+Unknown field names are preserved and may be rejected by the provider.
+
+- ``DocumentField``

@@ -133,8 +133,23 @@ extension Endpoint where Response == FederalRegisterDocument {
   /// - Returns: The independent detail endpoint.
   /// - Throws: `DocumentValidationError.invalidDocumentNumber` for invalid path input.
   public static func document(_ number: String) throws(DocumentValidationError) -> Self {
+    try document(number, fields: [])
+  }
+
+  /// Describes a selected document detail, retaining required identity and title.
+  /// - Parameters:
+  ///   - number: Original provider number, with letters, digits, and hyphens only.
+  ///   - fields: Empty preserves defaults; nonempty adds document number and title.
+  /// - Returns: One independent endpoint.
+  /// - Throws: `DocumentValidationError` for invalid number or field names.
+  public static func document(_ number: String, fields: [DocumentField])
+    throws(DocumentValidationError) -> Self
+  {
     guard isPathSegment(number) else { throw .invalidDocumentNumber(number) }
-    return builtIn(path: "/api/v1/documents/" + number + ".json")
+    let items = try DocumentField.queryItems(fields)
+    return builtIn(
+      path: "/api/v1/documents/" + number + ".json"
+        + (items.isEmpty ? "" : "?" + formEncodedQuery(items)))
   }
 }
 

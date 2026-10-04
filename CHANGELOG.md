@@ -8,6 +8,10 @@ All notable changes are documented here, following
 
 ### Added
 
+- Published field selection and significance filtering. Nonempty built-in selections include identity
+  and title; empty selections retain provider defaults. Existing detail method references remain valid.
+  New defaulted query parameters can affect stored initializer function references.
+
 - `SwiftFederalRegisterDocumentsModels`, portable `Codable` models, validated queries, and typed
   `Endpoint` and `DocumentRequest` values with no third-party dependency, and
   `SwiftFederalRegisterDocuments`, a `FederalRegisterClient` that sends them through

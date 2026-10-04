@@ -32,6 +32,8 @@ public struct DocumentSearchQuery: Hashable, Sendable {
   public let docketID: String?
   /// The effective-date condition, sent under `conditions[effective_date]`.
   public let effectiveDate: DocumentDateFilter?
+  /// Selected source fields; an empty array preserves provider defaults.
+  public let fields: [DocumentField]
   /// The requested chronological order.
   public let order: DocumentQuery.Order
   /// Number of results per response; the API documents 20 by default and 1000 maximum.
@@ -40,6 +42,8 @@ public struct DocumentSearchQuery: Hashable, Sendable {
   public let publicationDate: DocumentDateFilter?
   /// One Regulation Identifier Number, sent as `conditions[regulation_id_number]`.
   public let regulationIDNumber: String?
+  /// The provider significance flag under EO 12866; nil omits the condition.
+  public let significant: Bool?
   /// The full-text search expression, sent as `conditions[term]` exactly as given.
   public let term: String?
   /// Document types, sent as repeated `conditions[type][]` codes.
@@ -51,11 +55,13 @@ public struct DocumentSearchQuery: Hashable, Sendable {
   ///   - cfr: A validated CFR title and optional part.
   ///   - docketID: A docket identifier; nonempty without control characters when given.
   ///   - effectiveDate: A validated effective-date condition.
+  ///   - fields: Requested fields; nonempty selections also send document number and title.
   ///   - order: Chronological order, defaulting to newest first.
   ///   - pageSize: A value in 1...1000; defaults to the API's 20.
   ///   - publicationDate: A validated publication-date condition.
   ///   - regulationIDNumber: A Regulation Identifier Number; nonempty without control characters
   ///     when given.
+  ///   - significant: Source significance flag; false is sent as 0.
   ///   - term: A full-text expression; nonempty without control characters when given.
   ///   - types: Document type codes; each must be nonempty without control characters.
   /// - Throws: `DocumentValidationError.invalidPageSize` for a page size outside 1...1000, or
@@ -64,9 +70,11 @@ public struct DocumentSearchQuery: Hashable, Sendable {
   ///   character.
   public init(
     agencies: [AgencyIdentifier] = [], cfr: CFRFilter? = nil, docketID: String? = nil,
-    effectiveDate: DocumentDateFilter? = nil, order: DocumentQuery.Order = .newest,
+    effectiveDate: DocumentDateFilter? = nil, fields: [DocumentField] = [],
+    order: DocumentQuery.Order = .newest,
     pageSize: Int = 20, publicationDate: DocumentDateFilter? = nil,
-    regulationIDNumber: String? = nil, term: String? = nil, types: [DocumentTypeCode] = []
+    regulationIDNumber: String? = nil, significant: Bool? = nil, term: String? = nil,
+    types: [DocumentTypeCode] = []
   ) throws(DocumentValidationError) {
     for agency in agencies where !Self.isUsable(agency.rawValue) {
       throw .emptyFilterValue("agencies")
@@ -78,14 +86,17 @@ public struct DocumentSearchQuery: Hashable, Sendable {
     }
     if let term, !Self.isUsable(term) { throw .emptyFilterValue("term") }
     for type in types where !Self.isUsable(type.rawValue) { throw .emptyFilterValue("types") }
+    _ = try DocumentField.queryItems(fields)
     self.agencies = agencies
     self.cfr = cfr
     self.docketID = docketID
     self.effectiveDate = effectiveDate
+    self.fields = fields
     self.order = order
     self.pageSize = pageSize
     self.publicationDate = publicationDate
     self.regulationIDNumber = regulationIDNumber
+    self.significant = significant
     self.term = term
     self.types = types
   }
@@ -100,12 +111,16 @@ public struct DocumentSearchQuery: Hashable, Sendable {
     if let cfr { items += cfr.queryItems }
     if let docketID { items.append(URLQueryItem(name: "conditions[docket_id]", value: docketID)) }
     if let effectiveDate { items += effectiveDate.queryItems(forKey: "effective_date") }
+    items += (try? DocumentField.queryItems(fields)) ?? []
     items.append(URLQueryItem(name: "order", value: order.rawValue))
     items.append(URLQueryItem(name: "per_page", value: String(pageSize)))
     if let publicationDate { items += publicationDate.queryItems(forKey: "publication_date") }
     if let regulationIDNumber {
       items.append(
         URLQueryItem(name: "conditions[regulation_id_number]", value: regulationIDNumber))
+    }
+    if let significant {
+      items.append(URLQueryItem(name: "conditions[significant]", value: significant ? "1" : "0"))
     }
     if let term { items.append(URLQueryItem(name: "conditions[term]", value: term)) }
     for type in types {
@@ -115,7 +130,7 @@ public struct DocumentSearchQuery: Hashable, Sendable {
   }
 
   /// Whether a filter string is nonempty and free of Unicode control characters.
-  private static func isUsable(_ value: String) -> Bool {
+  static func isUsable(_ value: String) -> Bool {
     !value.isEmpty && !value.unicodeScalars.contains { $0.properties.generalCategory == .control }
   }
 }

@@ -62,8 +62,20 @@ public struct FederalRegisterClient: Sendable {
   public func document(_ number: String) async throws(FederalRegisterError)
     -> FederalRegisterDocument
   {
+    try await document(number, fields: [])
+  }
+
+  /// Retrieves selected source fields, including required identity and title.
+  /// - Parameters:
+  ///   - number: The original provider number.
+  ///   - fields: Empty preserves defaults; nonempty adds document number and title.
+  /// - Returns: Source fields without invented values.
+  /// - Throws: `FederalRegisterError.validation` for invalid input, or execution failures.
+  public func document(_ number: String, fields: [DocumentField])
+    async throws(FederalRegisterError) -> FederalRegisterDocument
+  {
     let request: DocumentRequest<FederalRegisterDocument>
-    do { request = try .document(number) } catch { throw .validation(error) }
+    do { request = try .document(number, fields: fields) } catch { throw .validation(error) }
     return try await value(for: request)
   }
 
