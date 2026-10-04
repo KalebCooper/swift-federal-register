@@ -51,36 +51,30 @@ extension DocumentRequest where Response == AgencyList {
   }
 }
 
-extension DocumentRequest where Response == FederalRegisterAgency {
-  /// Describes one agency detail lookup by slug.
-  /// - Parameter identifier: The agency slug, known or not yet cataloged.
-  /// - Returns: A reusable single-operation request.
-  /// - Throws: `DocumentValidationError.invalidAgencyIdentifier` for invalid path input.
-  public static func agency(_ identifier: AgencyIdentifier) throws(DocumentValidationError) -> Self
+extension DocumentRequest where Response == DocumentBatch {
+  /// Describes a single batch operation in provider order.
+  /// - Parameters:
+  ///   - numbers: Nonempty original identifiers.
+  ///   - fields: Empty preserves defaults; nonempty includes document number and title.
+  /// - Returns: A reusable request with no automatic continuation or missing-record retry.
+  /// - Throws: `DocumentValidationError` for empty input, unsafe identifiers, or invalid fields.
+  public static func documents(numbered numbers: [String], fields: [DocumentField] = [])
+    throws(DocumentValidationError) -> Self
   {
-    Self(endpoint: try .agency(identifier))
+    Self(endpoint: try .documents(numbered: numbers, fields: fields))
   }
 }
 
-extension DocumentRequest where Response == FederalRegisterDocument {
-  /// Describes one document detail lookup.
-  /// - Parameter number: The original provider document number.
-  /// - Returns: A reusable detail request.
-  /// - Throws: `DocumentValidationError.invalidDocumentNumber` for invalid input.
-  public static func document(_ number: String) throws(DocumentValidationError) -> Self {
-    try document(number, fields: [])
-  }
-
-  /// Describes a selected document detail with required identity and title.
+extension DocumentRequest where Response == DocumentFacetCounts {
+  /// Describes one condition-only facet request.
   /// - Parameters:
-  ///   - number: The original provider number.
-  ///   - fields: Empty preserves defaults; nonempty adds document number and title.
-  /// - Returns: A single-operation request.
-  /// - Throws: `DocumentValidationError` for invalid input.
-  public static func document(_ number: String, fields: [DocumentField])
-    throws(DocumentValidationError) -> Self
+  ///   - facet: Provider grouping.
+  ///   - query: Search conditions; presentation parameters are excluded.
+  /// - Returns: One reusable request with no continuation.
+  public static func documentFacets(_ facet: DocumentFacet, matching query: DocumentSearchQuery)
+    -> Self
   {
-    Self(endpoint: try .document(number, fields: fields))
+    Self(endpoint: .documentFacets(facet, matching: query))
   }
 }
 
@@ -113,30 +107,36 @@ extension DocumentRequest where Response == DocumentPage {
   }
 }
 
-extension DocumentRequest where Response == DocumentBatch {
-  /// Describes a single batch operation in provider order.
-  /// - Parameters:
-  ///   - numbers: Nonempty original identifiers.
-  ///   - fields: Empty preserves defaults; nonempty includes document number and title.
-  /// - Returns: A reusable request with no automatic continuation or missing-record retry.
-  /// - Throws: `DocumentValidationError` for empty input, unsafe identifiers, or invalid fields.
-  public static func documents(numbered numbers: [String], fields: [DocumentField] = [])
-    throws(DocumentValidationError) -> Self
+extension DocumentRequest where Response == FederalRegisterAgency {
+  /// Describes one agency detail lookup by slug.
+  /// - Parameter identifier: The agency slug, known or not yet cataloged.
+  /// - Returns: A reusable single-operation request.
+  /// - Throws: `DocumentValidationError.invalidAgencyIdentifier` for invalid path input.
+  public static func agency(_ identifier: AgencyIdentifier) throws(DocumentValidationError) -> Self
   {
-    Self(endpoint: try .documents(numbered: numbers, fields: fields))
+    Self(endpoint: try .agency(identifier))
   }
 }
 
-extension DocumentRequest where Response == DocumentFacetCounts {
-  /// Describes one condition-only facet request.
+extension DocumentRequest where Response == FederalRegisterDocument {
+  /// Describes one document detail lookup.
+  /// - Parameter number: The original provider document number.
+  /// - Returns: A reusable detail request.
+  /// - Throws: `DocumentValidationError.invalidDocumentNumber` for invalid input.
+  public static func document(_ number: String) throws(DocumentValidationError) -> Self {
+    try document(number, fields: [])
+  }
+
+  /// Describes a selected document detail with required identity and title.
   /// - Parameters:
-  ///   - facet: Provider grouping.
-  ///   - query: Search conditions; presentation parameters are excluded.
-  /// - Returns: One reusable request with no continuation.
-  public static func documentFacets(_ facet: DocumentFacet, matching query: DocumentSearchQuery)
-    -> Self
+  ///   - number: The original provider number.
+  ///   - fields: Empty preserves defaults; nonempty adds document number and title.
+  /// - Returns: A single-operation request.
+  /// - Throws: `DocumentValidationError` for invalid input.
+  public static func document(_ number: String, fields: [DocumentField])
+    throws(DocumentValidationError) -> Self
   {
-    Self(endpoint: .documentFacets(facet, matching: query))
+    Self(endpoint: try .document(number, fields: fields))
   }
 }
 

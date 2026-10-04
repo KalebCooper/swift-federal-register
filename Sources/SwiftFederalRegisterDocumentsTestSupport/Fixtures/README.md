@@ -39,3 +39,13 @@ The two-word term search `search-spaced-term-page-one.json` (`conditions[term]=c
 two per page) was retrieved from the official documents route on September 26, 2026 UTC with the same
 User-Agent. Its `next_page_url` is kept as published: the provider writes the space as `+` in the
 query and gives a `page` number with no `search_after_cursor`.
+
+The expanded API captures were retrieved September 28–29, 2026 UTC from the exact official URLs
+in `receipts.json`. They cover selected fields, batches, combined filters, facets, issue hierarchies,
+public-inspection listings/details/search continuations, and suggested-search metadata. All 75 HTTP
+fixture bodies retain their original bytes, status, retrieval timestamp, and digest.
+
+`expanded-vocabulary.json` is a derived extraction of documented names from the retained official
+API schema. Its metadata records that schema's URL, capture time, and SHA-256. It is not an HTTP
+response fixture and is deliberately excluded from the 75 response receipts. Tests compare public
+shorthands with these recorded names; unknown values remain supported independently.

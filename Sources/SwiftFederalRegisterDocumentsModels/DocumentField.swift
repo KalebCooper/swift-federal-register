@@ -42,7 +42,7 @@ public struct DocumentField: Codable, Hashable, RawRepresentable, Sendable {
   /// The provider's `docket_id` field.
   public static let docketID = Self(rawValue: "docket_id")
   /// The provider's `docket_ids` field.
-  public static let docketIDS = Self(rawValue: "docket_ids")
+  public static let docketIDs = Self(rawValue: "docket_ids")
   /// The provider's `dockets` field.
   public static let dockets = Self(rawValue: "dockets")
   /// The provider's `document_number` field.

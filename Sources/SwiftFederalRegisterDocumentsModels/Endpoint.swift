@@ -29,10 +29,11 @@ public struct Endpoint<Response>: Hashable, Sendable {
       path: parts.percentEncodedPath + (parts.percentEncodedQuery.map { "?" + $0 } ?? ""))
   }
 
-  /// Creates a custom typed endpoint in the document, agency, or full-text routes.
+  /// Creates a custom typed endpoint in a supported published-document, agency, issue,
+  /// public-inspection, suggested-search, or full-text route.
   ///
-  /// Agency routes are the catalog, `/api/v1/agencies.json`, and a detail path with exactly one
-  /// segment after `/api/v1/agencies/`.
+  /// Inspection search accepts the verified hyphen and underscore aliases. Issue paths require a
+  /// valid date, while inspection detail/batch and suggested detail paths require safe identifiers.
   /// - Parameters:
   ///   - accept: A nonempty media type without control characters.
   ///   - path: A root-relative path with no authority, fragments, dot segments, or encoded separators.
@@ -79,6 +80,14 @@ public struct Endpoint<Response>: Hashable, Sendable {
     items.map { formEncoded($0.name) + "=" + formEncoded($0.value ?? "") }.joined(separator: "&")
   }
 
+  /// Whether a provider identifier can form one path segment: nonempty ASCII letters, digits, and hyphens.
+  static func isPathSegment(_ value: String) -> Bool {
+    !value.isEmpty
+      && value.utf8.allSatisfy {
+        (48...57).contains($0) || (65...90).contains($0) || (97...122).contains($0) || $0 == 45
+      }
+  }
+
   private static func formEncoded(_ text: String) -> String {
     var encoded = ""
     for byte in text.utf8 {
@@ -121,13 +130,6 @@ public struct Endpoint<Response>: Hashable, Sendable {
     return isPathSegment(String(path.dropFirst(prefix.count).dropLast(5)))
   }
 
-  /// Whether a provider identifier can form one path segment: nonempty ASCII letters, digits, and hyphens.
-  static func isPathSegment(_ value: String) -> Bool {
-    !value.isEmpty
-      && value.utf8.allSatisfy {
-        (48...57).contains($0) || (65...90).contains($0) || (97...122).contains($0) || $0 == 45
-      }
-  }
 }
 
 extension Endpoint where Response == AgencyList {
@@ -137,6 +139,66 @@ extension Endpoint where Response == AgencyList {
   /// - Returns: The independent catalog endpoint.
   public static func agencies() -> Self {
     builtIn(path: "/api/v1/agencies.json")
+  }
+}
+
+extension Endpoint where Response == DocumentBatch {
+  /// Describes one batch lookup, with no chunking, reordering, or retry.
+  /// - Parameters:
+  ///   - numbers: Nonempty original identifiers, each validated before joining with commas.
+  ///   - fields: Empty preserves defaults; nonempty includes document number and title.
+  /// - Returns: One endpoint; singleton responses retain their detail representation.
+  /// - Throws: `DocumentValidationError` for empty input, unsafe identifiers, or invalid field names.
+  public static func documents(numbered numbers: [String], fields: [DocumentField] = [])
+    throws(DocumentValidationError) -> Self
+  {
+    guard !numbers.isEmpty else { throw .emptyDocumentNumbers }
+    for number in numbers where !isPathSegment(number) { throw .invalidDocumentNumber(number) }
+    let items = try DocumentField.queryItems(fields)
+    return builtIn(
+      path: "/api/v1/documents/" + numbers.joined(separator: ",") + ".json"
+        + (items.isEmpty ? "" : "?" + formEncodedQuery(items)))
+  }
+}
+
+extension Endpoint where Response == DocumentFacetCounts {
+  /// Describes facet counts using search conditions only.
+  /// - Parameters:
+  ///   - facet: The provider grouping.
+  ///   - query: Conditions to count; fields, order, and page size are excluded.
+  /// - Returns: One response of keyed buckets, with no automatic continuation.
+  public static func documentFacets(_ facet: DocumentFacet, matching query: DocumentSearchQuery)
+    -> Self
+  {
+    let conditions = formEncodedQuery(query.conditionItems)
+    return builtIn(
+      path: "/api/v1/documents/facets/" + facet.rawValue
+        + (conditions.isEmpty ? "" : "?" + conditions))
+  }
+}
+
+extension Endpoint where Response == DocumentPage {
+  /// Describes the first presidential-document search page.
+  /// - Parameter query: Validated filters and page size.
+  /// - Returns: A single-page endpoint. Sequence execution uses the separate request's continuation policy.
+  public static func presidentialDocuments(matching query: DocumentQuery) -> Self {
+    builtIn(path: "/api/v1/documents.json?" + formEncodedQuery(query.queryItems))
+  }
+
+  /// Describes the first page of a general document search.
+  ///
+  /// Query values are percent-encoded outside the RFC 3986 unreserved characters, so a term
+  /// containing `+`, `&`, `=`, or `%` reaches the provider exactly as stored in the query. No
+  /// document-type condition is added.
+  ///
+  /// ```swift
+  /// let endpoint = Endpoint<DocumentPage>.searchDocuments(
+  ///   matching: try DocumentSearchQuery(term: "clean water"))
+  /// ```
+  /// - Parameter query: Validated general search filters, order, and page size.
+  /// - Returns: A single-page endpoint. Sequence execution uses the separate request's continuation policy.
+  public static func searchDocuments(matching query: DocumentSearchQuery) -> Self {
+    builtIn(path: "/api/v1/documents.json?" + formEncodedQuery(query.queryItems))
   }
 }
 
@@ -180,68 +242,6 @@ extension Endpoint where Response == FederalRegisterDocument {
     return builtIn(
       path: "/api/v1/documents/" + number + ".json"
         + (items.isEmpty ? "" : "?" + formEncodedQuery(items)))
-  }
-}
-
-extension Endpoint where Response == DocumentPage {
-  /// Describes the first presidential-document search page.
-  /// - Parameter query: Validated filters and page size.
-  /// - Returns: A single-page endpoint. Sequence execution uses the separate request's continuation policy.
-  public static func presidentialDocuments(matching query: DocumentQuery) -> Self {
-    var components = URLComponents()
-    components.queryItems = query.queryItems
-    return builtIn(path: "/api/v1/documents.json?" + (components.percentEncodedQuery ?? ""))
-  }
-
-  /// Describes the first page of a general document search.
-  ///
-  /// Query values are percent-encoded outside the RFC 3986 unreserved characters, so a term
-  /// containing `+`, `&`, `=`, or `%` reaches the provider exactly as stored in the query. No
-  /// document-type condition is added.
-  ///
-  /// ```swift
-  /// let endpoint = Endpoint<DocumentPage>.searchDocuments(
-  ///   matching: try DocumentSearchQuery(term: "clean water"))
-  /// ```
-  /// - Parameter query: Validated general search filters, order, and page size.
-  /// - Returns: A single-page endpoint. Sequence execution uses the separate request's continuation policy.
-  public static func searchDocuments(matching query: DocumentSearchQuery) -> Self {
-    builtIn(path: "/api/v1/documents.json?" + formEncodedQuery(query.queryItems))
-  }
-}
-
-extension Endpoint where Response == DocumentBatch {
-  /// Describes one batch lookup, with no chunking, reordering, or retry.
-  /// - Parameters:
-  ///   - numbers: Nonempty original identifiers, each validated before joining with commas.
-  ///   - fields: Empty preserves defaults; nonempty includes document number and title.
-  /// - Returns: One endpoint; singleton responses retain their detail representation.
-  /// - Throws: `DocumentValidationError` for empty input, unsafe identifiers, or invalid field names.
-  public static func documents(numbered numbers: [String], fields: [DocumentField] = [])
-    throws(DocumentValidationError) -> Self
-  {
-    guard !numbers.isEmpty else { throw .emptyDocumentNumbers }
-    for number in numbers where !isPathSegment(number) { throw .invalidDocumentNumber(number) }
-    let items = try DocumentField.queryItems(fields)
-    return builtIn(
-      path: "/api/v1/documents/" + numbers.joined(separator: ",") + ".json"
-        + (items.isEmpty ? "" : "?" + formEncodedQuery(items)))
-  }
-}
-
-extension Endpoint where Response == DocumentFacetCounts {
-  /// Describes facet counts using search conditions only.
-  /// - Parameters:
-  ///   - facet: The provider grouping.
-  ///   - query: Conditions to count; fields, order, and page size are excluded.
-  /// - Returns: One response of keyed buckets, with no automatic continuation.
-  public static func documentFacets(_ facet: DocumentFacet, matching query: DocumentSearchQuery)
-    -> Self
-  {
-    let conditions = formEncodedQuery(query.conditionItems)
-    return builtIn(
-      path: "/api/v1/documents/facets/" + facet.rawValue
-        + (conditions.isEmpty ? "" : "?" + conditions))
   }
 }
 

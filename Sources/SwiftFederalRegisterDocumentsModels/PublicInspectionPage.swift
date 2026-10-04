@@ -20,8 +20,7 @@ public struct PublicInspectionPage: Codable, DocumentResponse, Hashable {
   public let results: [PublicInspectionDocument]
   /// The reported page total, or nil when the provider omits it, as it does for zero matches.
   ///
-  /// Recorded captures report 50 at `per_page=2` for 10000 matches, so this is a capped figure and
-  /// never a traversal limit. The provider does not promise that pages beyond its depth cap exist.
+  /// This source value is never a traversal limit or a guarantee of complete coverage.
   public let totalPages: Int?
 
   private enum CodingKeys: String, CodingKey {

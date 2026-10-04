@@ -30,6 +30,8 @@ package enum Fixture: String, CaseIterable, Sendable {
   case executiveOrder = "executive-order.json"
   /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
   case executiveOrderTwo = "executive-order-two.json"
+  /// Derived name lists from the attributed September 29 schema; not an HTTP response body.
+  case expandedVocabulary = "expanded-vocabulary.json"
   /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
   case facetsAgency = "facets-agency.json"
   /// Recorded official response; exact URL, status, and digest are retained in receipts.json.

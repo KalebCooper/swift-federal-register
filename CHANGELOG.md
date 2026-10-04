@@ -6,6 +6,11 @@ All notable changes are documented here, following
 
 ## Unreleased
 
+### Fixed
+
+- Presidential filters now preserve literal plus signs and reserved characters through the provider's
+  form parser, using the same encoding as general and inspection search.
+
 ### Added
 
 - Suggested-search catalog and detail discovery retain markup and raw search conditions without

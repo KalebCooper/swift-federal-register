@@ -52,6 +52,17 @@ struct ExpandedQueryTests {
     }
   }
 
+  @Test("Open presidential values preserve literal plus and reserved characters")
+  func presidentialEncoding() throws {
+    let query = try DocumentQuery(
+      president: "A+B & é",
+      presidentialDocumentType: .init(rawValue: "future+type"))
+    #expect(
+      Endpoint<DocumentPage>.presidentialDocuments(matching: query).path
+        == "/api/v1/documents.json?conditions%5Bpresident%5D%5B%5D=A%2BB%20%26%20%C3%A9&conditions%5Bpresidential_document_type%5D%5B%5D=future%2Btype&conditions%5Btype%5D%5B%5D=PRESDOCU&order=newest&per_page=20"
+    )
+  }
+
   @Test("Typed subtype preserves unknown values, nil and existing query defaults")
   func subtype() throws {
     let order: DocumentQuery.Order = .newest

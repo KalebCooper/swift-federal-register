@@ -119,8 +119,7 @@ public struct DocumentSearchQuery: Hashable, Sendable {
     self.types = types
   }
 
-  /// Every query item this search sends, with raw values, sorted by name and then by value so the
-  /// same filters always produce the same sequence.
+  /// Conditions only, excluding fields, order, and page size; sorted without discarding duplicates.
   var conditionItems: [URLQueryItem] {
     var items: [URLQueryItem] = []
     for agency in agencies {

@@ -37,6 +37,15 @@ extension FederalRegisterClient {
     return try await value(for: request)
   }
 
+  /// Creates a lazy inspection traversal; custom endpoint requests remain single-page.
+  /// - Parameter request: A reusable search or custom endpoint request.
+  /// - Returns: Independent iterators with no construction I/O or prefetch.
+  public func publicInspectionDocuments(for request: DocumentRequest<PublicInspectionPage>)
+    -> PublicInspectionSequence
+  {
+    PublicInspectionSequence(pages: publicInspectionPages(for: request))
+  }
+
   /// Retrieves one inspection response, preserving source dates and partial errors.
   /// - Parameter numbers: The original nonempty identifiers.
   /// - Returns: The original source value; no PDF or referenced document is fetched.
@@ -49,15 +58,6 @@ extension FederalRegisterClient {
       throw .validation(error)
     }
     return try await value(for: request)
-  }
-
-  /// Creates a lazy inspection traversal; custom endpoint requests remain single-page.
-  /// - Parameter request: A reusable search or custom endpoint request.
-  /// - Returns: Independent iterators with no construction I/O or prefetch.
-  public func publicInspectionDocuments(for request: DocumentRequest<PublicInspectionPage>)
-    -> PublicInspectionSequence
-  {
-    PublicInspectionSequence(pages: publicInspectionPages(for: request))
   }
 
   /// Creates a lazy inspection search traversal preserving source order and duplicates.
