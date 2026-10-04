@@ -204,3 +204,10 @@ Counts carry no sum-to-total or mutually-exclusive-bucket guarantee.
 - ``DocumentFacet``
 - ``DocumentFacetBucket``
 - ``DocumentFacetCounts``
+
+## Daily issues
+
+Issue contents retain source groups and document-number references. Resolve references with an
+explicit separate `documents(numbered:)` operation when needed; reading an issue performs no hydration.
+
+- ``IssueTableOfContents``

@@ -39,6 +39,17 @@ extension JSONValue {
     return nil
   }
 
+  /// Every array element as an object; one incompatible element makes the whole projection nil.
+  var objectArray: [[String: JSONValue]]? {
+    guard let elements = array else { return nil }
+    var result: [[String: JSONValue]] = []
+    for element in elements {
+      guard let object = element.object else { return nil }
+      result.append(object)
+    }
+    return result
+  }
+
   /// Every element as a string, or nil when the value is not an array or any element is not a string.
   var stringArray: [String]? {
     guard let elements = array else { return nil }

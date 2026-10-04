@@ -52,7 +52,8 @@ public struct Endpoint<Response>: Hashable, Sendable {
         $0.isEmpty || $0 == "." || $0 == ".."
       }),
       decoded == parts.percentEncodedPath,
-      decoded == "/api/v1/documents" || decoded == "/api/v1/documents.json"
+      Self.isIssuePath(decoded) || decoded == "/api/v1/documents"
+        || decoded == "/api/v1/documents.json"
         || decoded.hasPrefix("/api/v1/documents/") || decoded.hasPrefix("/documents/full_text/")
         || decoded == "/api/v1/agencies.json"
         || (decoded.hasPrefix("/api/v1/agencies/")
@@ -89,6 +90,12 @@ public struct Endpoint<Response>: Hashable, Sendable {
       }
     }
     return encoded
+  }
+
+  private static func isIssuePath(_ path: String) -> Bool {
+    let prefix = "/api/v1/issues/"
+    guard path.hasPrefix(prefix), path.hasSuffix(".json") else { return false }
+    return GregorianDate.isValid(String(path.dropFirst(prefix.count).dropLast(5)))
   }
 
   /// Whether a provider identifier can form one path segment: nonempty ASCII letters, digits, and hyphens.
@@ -212,5 +219,16 @@ extension Endpoint where Response == DocumentFacetCounts {
     return builtIn(
       path: "/api/v1/documents/facets/" + facet.rawValue
         + (conditions.isEmpty ? "" : "?" + conditions))
+  }
+}
+
+extension Endpoint where Response == IssueTableOfContents {
+  /// Describes one daily issue lookup; a nonpublication-day HTTP failure remains a failure.
+  /// - Parameter date: A real Gregorian YYYY-MM-DD date.
+  /// - Returns: One independent issue endpoint.
+  /// - Throws: `DocumentValidationError.invalidDate` for invalid input.
+  public static func issueTableOfContents(on date: String) throws(DocumentValidationError) -> Self {
+    guard GregorianDate.isValid(date) else { throw .invalidDate(date) }
+    return builtIn(path: "/api/v1/issues/" + date + ".json")
   }
 }

@@ -8,6 +8,9 @@ All notable changes are documented here, following
 
 ### Added
 
+- Daily issue contents preserve agency groups, see-also references, categories, subjects, and document
+  number lists. Nonpublication-day HTTP failures are not converted to empty issues.
+
 - Condition-only facet counts for all ten documented groupings. Bucket keys and raw counts remain
   source data; overlapping counts and complete coverage are not inferred.
 

@@ -137,3 +137,13 @@ extension DocumentRequest where Response == DocumentFacetCounts {
     Self(endpoint: .documentFacets(facet, matching: query))
   }
 }
+
+extension DocumentRequest where Response == IssueTableOfContents {
+  /// Describes one daily issue without fetching its referenced documents.
+  /// - Parameter date: A real Gregorian YYYY-MM-DD date.
+  /// - Returns: One reusable request.
+  /// - Throws: `DocumentValidationError.invalidDate` for invalid input.
+  public static func issueTableOfContents(on date: String) throws(DocumentValidationError) -> Self {
+    Self(endpoint: try .issueTableOfContents(on: date))
+  }
+}
