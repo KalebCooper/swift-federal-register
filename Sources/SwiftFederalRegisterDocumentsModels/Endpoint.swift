@@ -179,3 +179,22 @@ extension Endpoint where Response == DocumentPage {
     builtIn(path: "/api/v1/documents.json?" + formEncodedQuery(query.queryItems))
   }
 }
+
+extension Endpoint where Response == DocumentBatch {
+  /// Describes one batch lookup, with no chunking, reordering, or retry.
+  /// - Parameters:
+  ///   - numbers: Nonempty original identifiers, each validated before joining with commas.
+  ///   - fields: Empty preserves defaults; nonempty includes document number and title.
+  /// - Returns: One endpoint; singleton responses retain their detail representation.
+  /// - Throws: `DocumentValidationError` for empty input, unsafe identifiers, or invalid field names.
+  public static func documents(numbered numbers: [String], fields: [DocumentField] = [])
+    throws(DocumentValidationError) -> Self
+  {
+    guard !numbers.isEmpty else { throw .emptyDocumentNumbers }
+    for number in numbers where !isPathSegment(number) { throw .invalidDocumentNumber(number) }
+    let items = try DocumentField.queryItems(fields)
+    return builtIn(
+      path: "/api/v1/documents/" + numbers.joined(separator: ",") + ".json"
+        + (items.isEmpty ? "" : "?" + formEncodedQuery(items)))
+  }
+}

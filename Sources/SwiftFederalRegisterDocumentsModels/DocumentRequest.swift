@@ -110,3 +110,17 @@ extension DocumentRequest where Response == DocumentPage {
     Self(resolution: .documentSearch(.searchDocuments(matching: query)))
   }
 }
+
+extension DocumentRequest where Response == DocumentBatch {
+  /// Describes a single batch operation in provider order.
+  /// - Parameters:
+  ///   - numbers: Nonempty original identifiers.
+  ///   - fields: Empty preserves defaults; nonempty includes document number and title.
+  /// - Returns: A reusable request with no automatic continuation or missing-record retry.
+  /// - Throws: `DocumentValidationError` for empty input, unsafe identifiers, or invalid fields.
+  public static func documents(numbered numbers: [String], fields: [DocumentField] = [])
+    throws(DocumentValidationError) -> Self
+  {
+    Self(endpoint: try .documents(numbered: numbers, fields: fields))
+  }
+}

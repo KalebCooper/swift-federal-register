@@ -173,3 +173,12 @@ and `title`; it does not inject values into a sparse response. False significanc
 Unknown field names are preserved and may be rejected by the provider.
 
 - ``DocumentField``
+
+## Batch lookup
+
+`DocumentRequest.documents(numbered:fields:)` performs one request. Source partial errors remain
+successful response data. Singleton results retain the original detail object and have no source count.
+No batching ceiling is promised, and the SDK does not chunk or retry missing records.
+
+- ``BatchLookupErrors``
+- ``DocumentBatch``

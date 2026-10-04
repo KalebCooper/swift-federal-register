@@ -139,6 +139,22 @@ public struct FederalRegisterClient: Sendable {
     documents(for: .presidentialDocuments(matching: query))
   }
 
+  /// Retrieves one batch response, preserving provider order and partial errors.
+  /// - Parameters:
+  ///   - numbers: Nonempty original identifiers; duplicates are sent unchanged.
+  ///   - fields: Empty preserves defaults; nonempty includes document number and title.
+  /// - Returns: The source batch. A singleton retains its detail shape and nil count.
+  /// - Throws: `FederalRegisterError.validation` for invalid input, or execution failures.
+  public func documents(numbered numbers: [String], fields: [DocumentField] = [])
+    async throws(FederalRegisterError) -> DocumentBatch
+  {
+    let request: DocumentRequest<DocumentBatch>
+    do { request = try .documents(numbered: numbers, fields: fields) } catch {
+      throw .validation(error)
+    }
+    return try await value(for: request)
+  }
+
   /// Retrieves only the first presidential-document page.
   /// - Parameter query: Validated filters.
   /// - Returns: The original page envelope.

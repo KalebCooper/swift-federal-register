@@ -8,6 +8,10 @@ All notable changes are documented here, following
 
 ### Added
 
+- Published batch lookup preserves provider order, partial errors, and singleton detail shapes.
+  Empty batches throw the new `DocumentValidationError.emptyDocumentNumbers` case; exhaustive
+  switches require review.
+
 - Published field selection and significance filtering. Nonempty built-in selections include identity
   and title; empty selections retain provider defaults. Existing detail method references remain valid.
   New defaulted query parameters can affect stored initializer function references.

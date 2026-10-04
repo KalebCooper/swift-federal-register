@@ -1,5 +1,7 @@
 /// Invalid input for a document operation.
 public enum DocumentValidationError: Error, Hashable, Sendable {
+  /// A batch lookup requires at least one document number.
+  case emptyDocumentNumbers
   /// A search filter value is empty or contains a control character; the associated value names
   /// the `DocumentSearchQuery` parameter (`agencies`, `docketID`, `regulationIDNumber`, `term`, or
   /// `types`).
