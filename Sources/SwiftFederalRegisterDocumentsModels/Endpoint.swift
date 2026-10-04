@@ -52,7 +52,7 @@ public struct Endpoint<Response>: Hashable, Sendable {
         $0.isEmpty || $0 == "." || $0 == ".."
       }),
       decoded == parts.percentEncodedPath,
-      Self.isIssuePath(decoded) || decoded == "/api/v1/documents"
+      Self.isInspectionPath(decoded) || Self.isIssuePath(decoded) || decoded == "/api/v1/documents"
         || decoded == "/api/v1/documents.json"
         || decoded.hasPrefix("/api/v1/documents/") || decoded.hasPrefix("/documents/full_text/")
         || decoded == "/api/v1/agencies.json"
@@ -90,6 +90,21 @@ public struct Endpoint<Response>: Hashable, Sendable {
       }
     }
     return encoded
+  }
+
+  private static func isInspectionPath(_ path: String) -> Bool {
+    if [
+      "/api/v1/public-inspection-documents", "/api/v1/public-inspection-documents.json",
+      "/api/v1/public_inspection_documents", "/api/v1/public_inspection_documents.json",
+    ].contains(path) {
+      return true
+    }
+    let prefix = "/api/v1/public-inspection-documents/"
+    guard path.hasPrefix(prefix), path.hasSuffix(".json") else { return false }
+    let segment = String(path.dropFirst(prefix.count).dropLast(5))
+    return !segment.isEmpty
+      && segment.split(separator: ",", omittingEmptySubsequences: false)
+        .allSatisfy { isPathSegment(String($0)) }
   }
 
   private static func isIssuePath(_ path: String) -> Bool {
@@ -230,5 +245,64 @@ extension Endpoint where Response == IssueTableOfContents {
   public static func issueTableOfContents(on date: String) throws(DocumentValidationError) -> Self {
     guard GregorianDate.isValid(date) else { throw .invalidDate(date) }
     return builtIn(path: "/api/v1/issues/" + date + ".json")
+  }
+}
+
+extension Endpoint where Response == PublicInspectionBatch {
+  /// Describes one inspection batch without chunking or reordering.
+  /// - Parameter numbers: Nonempty original numbers, individually validated.
+  /// - Returns: One endpoint; singleton responses preserve their detail shape.
+  /// - Throws: `DocumentValidationError` for empty or unsafe identifiers.
+  public static func publicInspectionDocuments(numbered numbers: [String])
+    throws(DocumentValidationError) -> Self
+  {
+    guard !numbers.isEmpty else { throw .emptyDocumentNumbers }
+    for number in numbers where !isPathSegment(number) { throw .invalidDocumentNumber(number) }
+    return builtIn(
+      path: "/api/v1/public-inspection-documents/" + numbers.joined(separator: ",") + ".json")
+  }
+}
+
+extension Endpoint where Response == PublicInspectionDocument {
+  /// Describes one inspection record, without fetching its advertised PDF.
+  /// - Parameter number: The original provider number.
+  /// - Returns: One independent endpoint.
+  /// - Throws: `DocumentValidationError.invalidDocumentNumber` for unsafe input.
+  public static func publicInspectionDocument(_ number: String) throws(DocumentValidationError)
+    -> Self
+  {
+    guard isPathSegment(number) else { throw .invalidDocumentNumber(number) }
+    return builtIn(path: "/api/v1/public-inspection-documents/" + number + ".json")
+  }
+}
+
+extension Endpoint where Response == PublicInspectionListing {
+  /// Describes the current listing, a single response without continuation.
+  /// - Returns: One current-listing endpoint.
+  public static func currentPublicInspectionDocuments() -> Self {
+    builtIn(path: "/api/v1/public-inspection-documents/current.json")
+  }
+
+  /// Describes a complete dated listing; this provider mode does not combine with search filters.
+  /// - Parameter date: A real Gregorian YYYY-MM-DD date.
+  /// - Returns: One dated-listing endpoint.
+  /// - Throws: `DocumentValidationError.invalidDate` for invalid input.
+  public static func publicInspectionDocuments(availableOn date: String)
+    throws(DocumentValidationError) -> Self
+  {
+    guard GregorianDate.isValid(date) else { throw .invalidDate(date) }
+    return builtIn(
+      path: "/api/v1/public-inspection-documents.json?"
+        + formEncodedQuery([URLQueryItem(name: "conditions[available_on]", value: date)]))
+  }
+}
+
+extension Endpoint where Response == PublicInspectionPage {
+  /// Describes only the first inspection search page.
+  /// - Parameter query: Validated search conditions and selected fields.
+  /// - Returns: An independent one-page endpoint.
+  public static func searchPublicInspectionDocuments(matching query: PublicInspectionQuery) -> Self
+  {
+    builtIn(path: "/api/v1/public-inspection-documents.json?" + formEncodedQuery(query.queryItems))
   }
 }

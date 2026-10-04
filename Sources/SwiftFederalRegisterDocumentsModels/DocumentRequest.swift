@@ -19,13 +19,15 @@ public struct DocumentRequest<Response>: Hashable, Sendable {
     /// A library-created presidential search whose sequence follows validated cursor or page-number
     /// links, the same rule as every library-created sequence.
     case presidentialDocuments(Endpoint<Response>)
+    /// An inspection search following only validated increasing page-number links.
+    case publicInspectionSearch(Endpoint<Response>)
   }
 
   /// The underlying independently executable endpoint.
   public var endpoint: Endpoint<Response> {
     switch resolution {
     case .documentSearch(let endpoint), .endpoint(let endpoint),
-      .presidentialDocuments(let endpoint):
+      .presidentialDocuments(let endpoint), .publicInspectionSearch(let endpoint):
       return endpoint
     }
   }
@@ -145,5 +147,59 @@ extension DocumentRequest where Response == IssueTableOfContents {
   /// - Throws: `DocumentValidationError.invalidDate` for invalid input.
   public static func issueTableOfContents(on date: String) throws(DocumentValidationError) -> Self {
     Self(endpoint: try .issueTableOfContents(on: date))
+  }
+}
+
+extension DocumentRequest where Response == PublicInspectionBatch {
+  /// Describes one inspection operation without continuation or automatic hydration.
+  /// - Parameter numbers: The original nonempty identifiers.
+  /// - Returns: One reusable source request.
+  /// - Throws: `DocumentValidationError` for invalid input.
+  public static func publicInspectionDocuments(numbered numbers: [String])
+    throws(DocumentValidationError) -> Self
+  {
+    Self(endpoint: try .publicInspectionDocuments(numbered: numbers))
+  }
+}
+
+extension DocumentRequest where Response == PublicInspectionDocument {
+  /// Describes one inspection operation without continuation or automatic hydration.
+  /// - Parameter number: The original provider identifier.
+  /// - Returns: One reusable source request.
+  /// - Throws: `DocumentValidationError` for invalid input.
+  public static func publicInspectionDocument(_ number: String) throws(DocumentValidationError)
+    -> Self
+  {
+    Self(endpoint: try .publicInspectionDocument(number))
+  }
+}
+
+extension DocumentRequest where Response == PublicInspectionListing {
+  /// Describes one inspection operation without continuation or automatic hydration.
+  /// - Returns: One reusable source request.
+  public static func currentPublicInspectionDocuments() -> Self {
+    Self(endpoint: .currentPublicInspectionDocuments())
+  }
+}
+
+extension DocumentRequest where Response == PublicInspectionListing {
+  /// Describes one inspection operation without continuation or automatic hydration.
+  /// - Parameter date: A real Gregorian YYYY-MM-DD date.
+  /// - Returns: One reusable source request.
+  /// - Throws: `DocumentValidationError` for invalid input.
+  public static func publicInspectionDocuments(availableOn date: String)
+    throws(DocumentValidationError) -> Self
+  {
+    Self(endpoint: try .publicInspectionDocuments(availableOn: date))
+  }
+}
+
+extension DocumentRequest where Response == PublicInspectionPage {
+  /// Describes an inspection search with validated lazy continuation.
+  /// - Parameter query: Validated inspection filters.
+  /// - Returns: A reusable request; single-value execution fetches only the first page.
+  public static func searchPublicInspectionDocuments(matching query: PublicInspectionQuery) -> Self
+  {
+    Self(resolution: .publicInspectionSearch(.searchPublicInspectionDocuments(matching: query)))
   }
 }

@@ -8,6 +8,13 @@ All notable changes are documented here, following
 
 ### Added
 
+- Inspection search and lazy page, item, and receipt sequences follow verified increasing page-number
+  links, with strict route aliases and routing parameters. Added `Resolution.publicInspectionSearch`;
+  consumers switching exhaustively must handle this distinct policy. Custom requests remain one page.
+
+- Separate public-inspection current and dated listings, detail, and batch values. Filing, listing
+  update, PDF update, and intended publication dates remain separate source strings. Links are not fetched.
+
 - Daily issue contents preserve agency groups, see-also references, categories, subjects, and document
   number lists. Nonpublication-day HTTP failures are not converted to empty issues.
 

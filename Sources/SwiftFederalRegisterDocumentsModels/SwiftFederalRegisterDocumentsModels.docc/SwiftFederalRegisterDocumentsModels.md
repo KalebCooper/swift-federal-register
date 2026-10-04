@@ -211,3 +211,25 @@ Issue contents retain source groups and document-number references. Resolve refe
 explicit separate `documents(numbered:)` operation when needed; reading an issue performs no hydration.
 
 - ``IssueTableOfContents``
+
+## Public inspection
+
+Public inspection previews scheduled documents; an intended publication date is not proof of final
+publication, and absence is not proof of withdrawal. Current and dated listings are single responses.
+The dated listing accepts only its date because the provider ignores other search filters in that mode.
+
+- ``PublicInspectionBatch``
+- ``PublicInspectionDocument``
+- ``PublicInspectionFilingType``
+- ``PublicInspectionListing``
+
+## Inspection search
+
+Inspection search uses a separate query and page family. Its next links use verified underscore
+aliases with exact routing parameters. Only increasing page numbers continue; cursors are rejected.
+Current and dated listings never become search sequences. Counts do not guarantee exhaustive coverage.
+
+- ``PublicInspectionDocumentField``
+- ``PublicInspectionFilingFilter``
+- ``PublicInspectionPage``
+- ``PublicInspectionQuery``

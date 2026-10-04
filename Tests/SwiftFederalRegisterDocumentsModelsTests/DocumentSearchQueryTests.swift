@@ -687,6 +687,7 @@ struct DocumentSearchQueryTests {
     case .documentSearch: "follows search cursor or page-number links"
     case .endpoint: "single page"
     case .presidentialDocuments: "follows presidential cursor or page-number links"
+    case .publicInspectionSearch: "follows inspection page-number links"
     }
   }
 }

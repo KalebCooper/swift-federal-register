@@ -18,7 +18,7 @@ public struct FederalRegisterClient: Sendable {
   /// The explicit application identity sent with each request.
   public let userAgent: String
 
-  private let client: HTTPClient
+  let client: HTTPClient
   private let retrievalTime: @Sendable () -> Date?
 
   /// Creates a client over a supplied transport.
@@ -210,7 +210,7 @@ public struct FederalRegisterClient: Sendable {
     try await send(request.endpoint)
   }
 
-  private func decode<Value: DocumentResponse>(
+  func decode<Value: DocumentResponse>(
     _ response: Response, as type: Value.Type, path: String
   )
     throws(FederalRegisterError) -> SourceResponse<Value>
@@ -231,7 +231,7 @@ public struct FederalRegisterClient: Sendable {
       retrievedAt: retrievalTime(), status: response.status.code, value: value)
   }
 
-  private func request<Value>(for endpoint: Endpoint<Value>) -> Request {
+  func request<Value>(for endpoint: Endpoint<Value>) -> Request {
     Request(headers: [.accept: endpoint.accept, .userAgent: userAgent], path: endpoint.path)
   }
 
@@ -241,7 +241,7 @@ public struct FederalRegisterClient: Sendable {
   ) -> DocumentPageSequence<Value> {
     let followsLinks: Bool
     switch request.resolution {
-    case .endpoint: followsLinks = false
+    case .endpoint, .publicInspectionSearch: followsLinks = false
     case .documentSearch, .presidentialDocuments: followsLinks = true
     }
     let base = client.pages(
