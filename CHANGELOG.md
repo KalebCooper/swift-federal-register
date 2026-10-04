@@ -8,6 +8,9 @@ All notable changes are documented here, following
 
 ### Added
 
+- Condition-only facet counts for all ten documented groupings. Bucket keys and raw counts remain
+  source data; overlapping counts and complete coverage are not inferred.
+
 - Topic, section, and geographic search conditions, plus executive-order-number ordering. Optional
   radius leaves the provider default unspecified; explicit radii must be 1...200 miles.
 - `PresidentialDocumentTypeCode` replaces the String query subtype. Migrate literals to

@@ -194,3 +194,13 @@ Use `.executiveOrder` for the typed presidential query subtype, or `.init(rawVal
 - ``PresidentialDocumentTypeCode``
 - ``SectionIdentifier``
 - ``TopicIdentifier``
+
+## Facets
+
+Facet requests reuse search conditions and exclude fields, page size, and order. Topic conditions
+are supported by a retained live capture despite their omission from the schema's facet parameters.
+Counts carry no sum-to-total or mutually-exclusive-bucket guarantee.
+
+- ``DocumentFacet``
+- ``DocumentFacetBucket``
+- ``DocumentFacetCounts``

@@ -124,3 +124,16 @@ extension DocumentRequest where Response == DocumentBatch {
     Self(endpoint: try .documents(numbered: numbers, fields: fields))
   }
 }
+
+extension DocumentRequest where Response == DocumentFacetCounts {
+  /// Describes one condition-only facet request.
+  /// - Parameters:
+  ///   - facet: Provider grouping.
+  ///   - query: Search conditions; presentation parameters are excluded.
+  /// - Returns: One reusable request with no continuation.
+  public static func documentFacets(_ facet: DocumentFacet, matching query: DocumentSearchQuery)
+    -> Self
+  {
+    Self(endpoint: .documentFacets(facet, matching: query))
+  }
+}

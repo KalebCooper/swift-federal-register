@@ -198,3 +198,19 @@ extension Endpoint where Response == DocumentBatch {
         + (items.isEmpty ? "" : "?" + formEncodedQuery(items)))
   }
 }
+
+extension Endpoint where Response == DocumentFacetCounts {
+  /// Describes facet counts using search conditions only.
+  /// - Parameters:
+  ///   - facet: The provider grouping.
+  ///   - query: Conditions to count; fields, order, and page size are excluded.
+  /// - Returns: One response of keyed buckets, with no automatic continuation.
+  public static func documentFacets(_ facet: DocumentFacet, matching query: DocumentSearchQuery)
+    -> Self
+  {
+    let conditions = formEncodedQuery(query.conditionItems)
+    return builtIn(
+      path: "/api/v1/documents/facets/" + facet.rawValue
+        + (conditions.isEmpty ? "" : "?" + conditions))
+  }
+}
