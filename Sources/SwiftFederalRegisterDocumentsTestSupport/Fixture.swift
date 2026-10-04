@@ -8,6 +8,10 @@ package enum Fixture: String, CaseIterable, Sendable {
   case agencyEPA = "agency-epa.json"
   /// `/api/v1/agencies/health-and-human-services-department.json`.
   case agencyHHS = "agency-hhs.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case batchMissingDuplicate = "batch-missing-duplicate.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case batchPublished = "batch-published.json"
   /// `/api/v1/documents/2026-19417.json`.
   case currentDocument = "current-document.json"
   /// `/documents/full_text/html/2026/09/22/2026-19417.html`.
@@ -16,6 +20,48 @@ package enum Fixture: String, CaseIterable, Sendable {
   case currentText = "current-content.txt"
   /// `/documents/full_text/xml/2026/09/22/2026-19417.xml`.
   case currentXML = "current-content.xml"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case eoTerm = "eo-term.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case eoTermTwo = "eo-term-two.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case eoUnfiltered = "eo-unfiltered.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case executiveOrder = "executive-order.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case executiveOrderTwo = "executive-order-two.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case facetsAgency = "facets-agency.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case facetsDaily = "facets-daily.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case facetsEmpty = "facets-empty.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case facetsMonthlyYear = "facets-monthly-year.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case facetsQuarterly = "facets-quarterly.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case facetsSection = "facets-section.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case facetsSubtypeYear = "facets-subtype-year.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case facetsTopic = "facets-topic.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case facetsTopicFilter = "facets-topic-filter.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case facetsType = "facets-type.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case facetsWeekly = "facets-weekly.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case facetsYearly = "facets-yearly.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case fieldsDetail = "fields-detail.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case fieldsUnknown = "fields-unknown.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case geographic = "geographic.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case geographicTwo = "geographic-two.json"
   /// `/api/v1/documents/93-32104.json`.
   case historicalDocument = "historical-document.json"
   /// `/documents/full_text/html/1994/01/03/93-32104.html`, HTTP 404.
@@ -24,14 +70,50 @@ package enum Fixture: String, CaseIterable, Sendable {
   case historicalPage = "historical-page.json"
   /// `/documents/full_text/text/1994/01/03/93-32104.txt`, an HTML wrapper served as text/plain.
   case historicalText = "historical-content.txt"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionBatch = "inspection-batch.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionBatchAllMissing = "inspection-batch-all-missing.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionBatchMissing = "inspection-batch-missing.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionBatchSingle = "inspection-batch-single.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionCurrent = "inspection-current.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionDateEmpty = "inspection-date-empty.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionDateOnly = "inspection-date-only.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionDetail = "inspection-detail.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionFilteredFields = "inspection-filtered-fields.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionFilteredFieldsTwo = "inspection-filtered-fields-two.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionSearch = "inspection-search.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionSearchTwo = "inspection-search-two.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case inspectionZero = "inspection-zero.json"
   /// An HTTP 400 from `/api/v1/documents` for a `search_after_cursor=invalid` probe (2026-09-24).
   /// The full request query was never logged; only this fragment, the status, and the response
   /// body bytes are evidenced.
   case invalidCursorFailure = "invalid-cursor.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case issue = "issue.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case issueNonpublication = "issue-nonpublication.json"
   /// `/api/v1/documents.json?conditions[type][]=PRESDOCU&order=newest&per_page=2`.
   case pageOne = "presidential-page-one.json"
   /// The exact `next_page_url` of pageOne, including its search_after_cursor; see receipts.json.
   case pageTwo = "presidential-page-two.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case publishedBatchAllMissing = "published-batch-all-missing.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case publishedBatchReverseFields = "published-batch-reverse-fields.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case publishedBatchSingle = "published-batch-single.json"
   /// `/api/v1/documents/2024-31396.json`.
   case regulatoryDocument = "regulatory-document.json"
   /// `/api/v1/documents/2024-29463.json`.
@@ -66,6 +148,24 @@ package enum Fixture: String, CaseIterable, Sendable {
   /// `/api/v1/documents.json?order=newest&per_page=2&conditions[publication_date][gte]=2024-01-01`
   /// `&conditions[publication_date][lte]=2024-12-31&conditions[term]=codexNoMatchingDocument987654321`.
   case searchTerminal = "search-terminal.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case significant0 = "significant-0.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case significant1 = "significant-1.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case significant1Two = "significant-1-two.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case sparseTitle = "sparse-title.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case suggestedCatalog = "suggested-catalog.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case suggestedDetail = "suggested-detail.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case suggestedSection = "suggested-section.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case topicFilterCrosscheck = "topic-filter-crosscheck.json"
+  /// Recorded official response; exact URL, status, and digest are retained in receipts.json.
+  case topicsSections = "topics-sections.json"
 
   /// Reads the original bytes from package resources.
   package func data() throws -> Data {
